@@ -15,7 +15,7 @@ Supabase Auth must use `https://ark-rage.vercel.app` as its Site URL and allow t
 
 ## Deploying updates
 
-Push changes to `main`. Vercel must be authorized for the private repository and connected to it before Git pushes can trigger automatic deployments. Until that connection is completed, use the linked directory:
+The private `sandeeprage/ark` repository is connected to Vercel. Push changes to `main` to trigger a production deployment. For a manual deployment from the linked directory:
 
 ```sh
 npx vercel deploy --prod
