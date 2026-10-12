@@ -19,6 +19,7 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
       - run: npm run test:publishing
+      - run: npx playwright test -c playwright.navigation.config.ts
   database:
     runs-on: ubuntu-latest
     services:

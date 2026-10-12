@@ -2,6 +2,7 @@ node_modules/
 .next/
 .next-publishing-tests/
 .next-production-checks/
+.next-navigation-build/
 out/
 .env*
 !.env.example

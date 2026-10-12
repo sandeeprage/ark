@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "./intent-link";
 import Image from "next/image";
 import { ArrowUpRight, Box } from "lucide-react";
 import { UpvoteButton } from "./upvote-button";

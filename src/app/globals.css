@@ -1,5 +1,45 @@
 @import "tailwindcss";
 
+.route-placeholder {
+  opacity: 0;
+  animation: route-placeholder-appear 150ms ease 200ms forwards;
+}
+.route-placeholder > div {
+  background: var(--surface);
+  border-radius: 8px;
+}
+.route-placeholder-label {
+  width: 130px;
+  height: 12px;
+  margin-bottom: 24px;
+}
+.route-placeholder-heading {
+  width: min(420px, 80%);
+  height: 44px;
+  margin-bottom: 18px;
+}
+.route-placeholder-description {
+  width: min(300px, 65%);
+  height: 16px;
+  margin-bottom: 42px;
+}
+.route-placeholder-content {
+  width: 100%;
+  height: 220px;
+  border: 1px solid var(--border);
+}
+@keyframes route-placeholder-appear {
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .route-placeholder {
+    animation: none;
+    opacity: 1;
+  }
+}
+
 :root {
   --canvas: #fff;
   --surface: #f7f7f7;

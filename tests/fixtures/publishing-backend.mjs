@@ -32,6 +32,8 @@ let memberships = new Map();
 let notices = [];
 let preferences = { follows: true, upvotes: true, launches: true };
 let failSave = false;
+let googleEnabled = false;
+let profileOverride = null;
 function authSession() {
   const expires = Math.floor(Date.now() / 1000) + 3600;
   const jwt = [
@@ -87,6 +89,9 @@ const server = http.createServer(async (request, response) => {
   try {
     if (path === "/__health") return json({ ready: true });
     if (path === "/__reset") {
+      googleEnabled = false;
+      profileOverride = null;
+      user.app_metadata.provider = "github";
       collections = [];
       memberships = new Map();
       notices = [];
@@ -110,6 +115,12 @@ const server = http.createServer(async (request, response) => {
       authMode = body().mode;
       return json({ ready: true });
     }
+    if (path === "/__google_mode") {
+      googleEnabled = true;
+      authMode = body().onboarding ? "onboarding" : "active";
+      user.app_metadata.provider = "google";
+      return json({ ready: true });
+    }
     if (path === "/__fail_save") {
       failSave = true;
       return json({ ready: true });
@@ -131,7 +142,10 @@ const server = http.createServer(async (request, response) => {
       project.status = "hidden";
       return json({ ready: true });
     }
-    if(path === "/__restore_project"){project.status="published";return json({ready:true});}
+    if (path === "/__restore_project") {
+      project.status = "published";
+      return json({ ready: true });
+    }
     if (path === "/__seed_discovery") {
       discovery = Array.from({ length: 25 }, (_, i) => ({
         id: `10000000-0000-4000-a000-${String(i + 1).padStart(12, "0")}`,
@@ -196,18 +210,22 @@ const server = http.createServer(async (request, response) => {
       return request.headers.authorization?.includes("eyJ")
         ? json(user)
         : json({ message: "No session", code: "bad_jwt" }, 401);
-    if (path === "/auth/v1/settings") return json({ external: { github: true, google: false } });
+    if (path === "/auth/v1/settings")
+      return json({ external: { github: true, google: googleEnabled } });
     if (path === "/rest/v1/profiles" && authMode === "profile_error")
       return json({ code: "PGRST000", message: "Fixture profile unavailable" }, 503);
     if (path === "/rest/v1/profiles")
       return json([
         {
           id: owner,
-          username: authMode === "onboarding" ? null : "fixture_maker",
-          display_name: "Fixture maker",
+          username:
+            profileOverride?.username ?? (authMode === "onboarding" ? null : "fixture_maker"),
+          display_name:
+            profileOverride?.display_name ??
+            (googleEnabled ? "Google fixture maker" : "Fixture maker"),
           bio: "Browser fixture only",
-          github_username: "fixture_maker",
-          github_connected_at: "2026-10-12T00:00:00Z",
+          github_username: googleEnabled ? null : "fixture_maker",
+          github_connected_at: googleEnabled ? null : "2026-10-12T00:00:00Z",
           created_at: "2026-10-12T00:00:00Z",
         },
       ]);
@@ -221,6 +239,14 @@ const server = http.createServer(async (request, response) => {
       if (name === "my_account_status")
         return json(authMode === "suspended" ? "suspended" : "active");
       if (name === "sync_my_github_identity") return json(null);
+      if (name === "update_my_profile") {
+        profileOverride = {
+          username: input.p_username,
+          display_name: input.p_display_name,
+          bio: input.p_bio,
+        };
+        return json(null);
+      }
       if (name === "list_collections")
         return json(
           collections.map((c) => ({ ...c, project_count: memberships.get(c.id)?.size ?? 0 })),
@@ -446,7 +472,7 @@ const server = http.createServer(async (request, response) => {
             is_cover: id === input.p_cover,
           };
         });
-        if(name === "publish_project")project.status = "published";
+        if (name === "publish_project") project.status = "published";
         project.published_at ||= new Date().toISOString();
         project.cover_media_id = input.p_cover;
         project.version++;

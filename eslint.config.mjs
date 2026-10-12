@@ -8,6 +8,7 @@ export default defineConfig([
     ".next/**",
     ".next-publishing-tests/**",
     ".next-production-checks/**",
+    ".next-navigation-build/**",
     "next-env.d.ts",
     ".local-postgres/**",
     ".local-postgres-check/**",

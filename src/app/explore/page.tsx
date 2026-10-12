@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/intent-link";
 import { ArrowDownWideNarrow, ArrowUpRight, Clock3, Code2, Plus, Sparkles } from "lucide-react";
 import { parseFilters, feedUrl, filterScope, type SearchParams } from "@/modules/discovery/filters";
 import { getCatalogs, listProjects } from "@/modules/discovery/queries";

@@ -23,10 +23,12 @@ export async function signIn(form: FormData) {
     provider,
     options: {
       redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(returnPath)}`,
-      ...(provider === "github" ? { scopes: "read:user user:email" } : {}),
+      ...(provider === "github"
+        ? { scopes: "read:user user:email" }
+        : { scopes: "openid email profile", queryParams: { prompt: "select_account" } }),
     },
   });
-  if (error || !data.url) redirect("/login?error=provider");
+  if (error || !data.url) redirect(loginDestination(origin, returnPath, "provider").toString());
   redirect(data.url);
 }
 

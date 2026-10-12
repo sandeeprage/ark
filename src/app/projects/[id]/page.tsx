@@ -35,13 +35,16 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 export default async function Project({ params }: { params: Promise<{ id: string }> }) {
   const project = await getPublicProject((await params).id);
   if (!project) notFound();
-  const [images, viewer] = await Promise.all([getProjectMedia(project.id), getViewer()]);
-  const [vote] = await getVoteStates([project]);
-  const saved = await getSavedStates([project]);
-  const management =
-    viewer?.id === project.maker_id && viewer.status === "active"
-      ? await getMyProject(project.id)
-      : null;
+  const [images, [vote], saved, management] = await Promise.all([
+    getProjectMedia(project.id),
+    getVoteStates([project]),
+    getSavedStates([project]),
+    getViewer().then((viewer) =>
+      viewer?.id === project.maker_id && viewer.status === "active"
+        ? getMyProject(project.id)
+        : null,
+    ),
+  ]);
   const url = `${process.env.NEXT_PUBLIC_SITE_URL || "http://127.0.0.1:3000"}/projects/${project.id}`;
   return (
     <div className="page project-detail">
