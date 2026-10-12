@@ -3,6 +3,7 @@ import { AppShell } from "@/components/app-shell";
 import "./globals.css";
 import "./publishing.css";
 import "./discovery.css";
+import "./social.css";
 
 export const metadata: Metadata = {
   title: { default: "ARK — A home for shipped work", template: "%s · ARK" },

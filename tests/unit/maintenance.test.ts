@@ -43,3 +43,16 @@ it("preserves authenticated local maintenance calls", async () => {
   vi.stubEnv("CRON_SECRET", "");
   expect((await POST(request("test-local-secret"))).status).toBe(200);
 });
+it("reports failed cleanup as a retryable service failure", async () => {
+  mocks.rpc
+    .mockResolvedValueOnce({ data: [{ id: "fixture-job", attempts: 1 }], error: null })
+    .mockResolvedValueOnce({ data: null, error: { code: "unavailable" } })
+    .mockResolvedValueOnce({ data: null, error: null });
+  const response = await POST(request("test-cron-secret"));
+  expect(response.status).toBe(503);
+  expect(await response.json()).toEqual({ completed: 0, failed: 1 });
+  expect(mocks.rpc).toHaveBeenCalledWith(
+    "finish_media_job",
+    expect.objectContaining({ p_success: false, p_code: "storage_cleanup_failed" }),
+  );
+});

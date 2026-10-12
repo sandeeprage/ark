@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/empty-state";
 import { getPinnedProjects } from "@/modules/projects/pins";
 import { getFollowState } from "@/modules/following/queries";
 import { FollowButton } from "@/components/follow-button";
+import { listCollections } from "@/modules/collections/queries";
 
 export async function generateMetadata({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
@@ -26,12 +27,13 @@ export default async function Maker({
   const profile = await getPublicProfile(username);
   if (!profile) notFound();
   const filters = parseFilters({ ...(await searchParams), tab: "latest" });
-  const [viewer, result, pinned, totals, follows] = await Promise.all([
+  const [viewer, result, pinned, totals, follows, collections] = await Promise.all([
     getViewer(),
     listProjects(filters, profile.id),
     getPinnedProjects(profile.id),
     getMakerTotals(profile.id),
     getFollowState(profile.id),
+    listCollections(profile.id),
   ]);
   return (
     <div className="page">
@@ -98,6 +100,19 @@ export default async function Maker({
           )}
         </aside>
         <section className="maker-projects">
+          {collections.length > 0 && (
+            <section className="maker-collections">
+              <h2>Public collections</h2>
+              <ul>
+                {collections.map((c) => (
+                  <li key={c.id}>
+                    <Link href={`/collections/${c.id}`}>{c.title}</Link>
+                    <span>{c.project_count} projects</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
           {!filters.cursor && pinned.length > 0 && (
             <>
               <div className="results-heading">

@@ -7,7 +7,7 @@ import { EmptyState } from "@/components/empty-state";
 export const metadata = { title: "Following" };
 export default async function Following({ searchParams }: { searchParams: Promise<SearchParams> }) {
   await requireViewer("/following");
-  const filters = parseFilters({ ...(await searchParams), tab: "following" });
+  const filters = parseFilters({ ...(await searchParams), tab: "following" }, true);
   const [catalogs, result] = await Promise.all([getCatalogs(), listProjects(filters)]);
   const filtered = Boolean(filters.category || filters.stack.length || filters.query);
   return (

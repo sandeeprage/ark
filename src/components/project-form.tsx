@@ -96,14 +96,14 @@ export function ProjectForm({
   const requestKey = useRef<string>("");
   const projectId = useRef(initial?.id ?? "");
   const dirtyRef = useRef(false);
-  const initialVersion=initial?.version;
+  const initialVersion = initial?.version;
   const filePicker = useRef<HTMLInputElement>(null);
   const blobs = useRef(new Set<string>());
   useEffect(() => {
     const previewBlobs = blobs.current;
     try {
       const saved = JSON.parse(sessionStorage.getItem(cacheKey) ?? "null");
-      if (saved?.values && (initialVersion===undefined || saved.version === initialVersion)) {
+      if (saved?.values && (initialVersion === undefined || saved.version === initialVersion)) {
         const restoredValues = { ...emptyValues };
         for (const key of [
           "name",
@@ -131,7 +131,11 @@ export function ProjectForm({
         if (typeof saved.requestKey === "string") requestKey.current = saved.requestKey;
       }
     } catch {
-      sessionStorage.removeItem(cacheKey);
+      try {
+        sessionStorage.removeItem(cacheKey);
+      } catch {
+        /* Tab storage is optional. */
+      }
     }
     return () => {
       for (const url of previewBlobs) URL.revokeObjectURL(url);
@@ -234,7 +238,11 @@ export function ProjectForm({
   function clearCache() {
     dirtyRef.current = false;
     setDirty(false);
-    sessionStorage.removeItem(cacheKey);
+    try {
+      sessionStorage.removeItem(cacheKey);
+    } catch {
+      /* A saved project must still navigate. */
+    }
   }
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -265,10 +273,14 @@ export function ProjectForm({
       let version = initial?.version ?? 1;
       if (!initial) {
         requestKey.current ||= crypto.randomUUID();
-        sessionStorage.setItem(
-          cacheKey,
-          JSON.stringify({ values, requestKey: requestKey.current }),
-        );
+        try {
+          sessionStorage.setItem(
+            cacheKey,
+            JSON.stringify({ values, requestKey: requestKey.current }),
+          );
+        } catch {
+          /* In-memory form state still supports this submission. */
+        }
         const prepared = await prepareProject(values, requestKey.current);
         if (!prepared.ok) {
           setFields(prepared.fields ?? {});
@@ -348,7 +360,11 @@ export function ProjectForm({
         throw new Error(result.error);
       }
       clearCache();
-      router.push(`/projects/${projectId.current}`);
+      router.push(
+        initial?.status === "hidden"
+          ? `/projects/${projectId.current}/edit?saved=1`
+          : `/projects/${projectId.current}`,
+      );
       router.refresh();
     } catch (submitError) {
       setError(

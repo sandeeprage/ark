@@ -41,7 +41,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
       </Link>
       <div className="sidebar-main">
         <p className="nav-label">DISCOVER</p>
-        <SidebarNav items={items} />
+        <SidebarNav items={items} notifications={Boolean(viewer && viewer.status === "active")} />
         <Link href="/publish" className="button button-primary publish-nav">
           <Plus size={17} /> Publish a project
         </Link>

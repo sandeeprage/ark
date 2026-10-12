@@ -79,3 +79,18 @@ test("restricted account reaches its notice and can sign out locally", async ({
   await page.getByRole("button", { name: "Sign out", exact: true }).click();
   await expect(page).toHaveURL(/\/explore$/);
 });
+test("local sign-out clears cookies during a provider outage", async ({
+  page,
+  request,
+  context,
+}) => {
+  await page.goto("/login?next=%2Fsettings");
+  await page.getByRole("button", { name: "Continue with GitHub", exact: true }).click();
+  await expect(page).toHaveURL(/\/settings$/);
+  await request.post("http://127.0.0.1:55431/__auth_mode", { data: { mode: "logout_error" } });
+  await page.getByRole("button", { name: "Sign out", exact: true }).click();
+  await expect(page).toHaveURL(/\/explore$/);
+  expect(
+    (await context.cookies()).filter((c) => c.name.startsWith("sb-127-auth-token")),
+  ).toHaveLength(0);
+});

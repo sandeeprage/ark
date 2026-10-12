@@ -1,12 +1,13 @@
 "use client";
 import Image from "next/image";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import type { SignedMedia } from "@/modules/projects/media";
 
 export function ProjectGallery({ images }: { images: SignedMedia[] }) {
   const [selected, setSelected] = useState<SignedMedia | null>(null);
+  const trigger = useRef<HTMLButtonElement | null>(null);
   if (!images.length) return null;
   return (
     <section className="gallery-section">
@@ -16,7 +17,10 @@ export function ProjectGallery({ images }: { images: SignedMedia[] }) {
           <figure key={image.id}>
             <button
               type="button"
-              onClick={() => setSelected(image)}
+              onClick={(event) => {
+                trigger.current = event.currentTarget;
+                setSelected(image);
+              }}
               aria-label={`Enlarge: ${image.alt_text}`}
             >
               <Image
@@ -42,7 +46,14 @@ export function ProjectGallery({ images }: { images: SignedMedia[] }) {
       >
         <Dialog.Portal>
           <Dialog.Overlay className="drawer-overlay" />
-          <Dialog.Content className="image-dialog" aria-describedby={undefined}>
+          <Dialog.Content
+            className="image-dialog"
+            aria-describedby={undefined}
+            onCloseAutoFocus={(event) => {
+              event.preventDefault();
+              trigger.current?.focus();
+            }}
+          >
             <Dialog.Title className="sr-only">{selected?.alt_text}</Dialog.Title>
             {selected && (
               <Image

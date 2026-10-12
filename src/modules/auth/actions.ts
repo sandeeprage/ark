@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/config";
 import { profileSchema, safeReturnPath } from "./validation";
-import { headers } from "next/headers";
+import { headers, cookies } from "next/headers";
 import { configuredAuthOrigin, loginDestination } from "./redirects";
 
 export type FormState = { error?: string; success?: string; fields?: Record<string, string[]> };
@@ -31,7 +31,23 @@ export async function signIn(form: FormData) {
 }
 
 export async function signOut() {
-  if (isSupabaseConfigured()) await (await createClient()).auth.signOut({ scope: "local" });
+  if (isSupabaseConfigured()) {
+    try {
+      await (await createClient()).auth.signOut({ scope: "local" });
+    } catch {
+      /* Remove this browser's local session even during a provider outage. */
+    } finally {
+      const prefix = `sb-${new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!).hostname.split(".")[0]}-auth-token`;
+      const store = await cookies();
+      for (const cookie of store.getAll())
+        if (
+          cookie.name === prefix ||
+          cookie.name.startsWith(prefix + ".") ||
+          cookie.name.startsWith(prefix + "-")
+        )
+          store.delete(cookie.name);
+    }
+  }
   redirect("/explore");
 }
 

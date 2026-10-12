@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
   }
   return NextResponse.json(
     { completed, failed },
-    { headers: { "Cache-Control": "private, no-store" } },
+    { status: failed ? 503 : 200, headers: { "Cache-Control": "private, no-store" } },
   );
 }
 

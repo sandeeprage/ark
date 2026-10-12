@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Bell, Bookmark, Compass, Menu, Settings2, UserRound, Users, X } from "lucide-react";
+import { NotificationBadge } from "./notification-badge";
 
 const icons = {
   compass: Compass,
@@ -13,7 +14,13 @@ const icons = {
   user: UserRound,
   settings: Settings2,
 };
-export function SidebarNav({ items }: { items: { href: string; label: string; icon: string }[] }) {
+export function SidebarNav({
+  items,
+  notifications = false,
+}: {
+  items: { href: string; label: string; icon: string }[];
+  notifications?: boolean;
+}) {
   const path = usePathname();
   return (
     <nav>
@@ -30,6 +37,7 @@ export function SidebarNav({ items }: { items: { href: string; label: string; ic
               >
                 <Icon size={18} strokeWidth={1.6} />
                 {item.label}
+                {notifications && item.href === "/notifications" && <NotificationBadge />}
                 {active && <span className="nav-active-dot" />}
               </Link>
             </li>

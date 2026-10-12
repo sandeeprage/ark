@@ -24,20 +24,29 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
   if (!isSupabaseConfigured()) return null;
   const client = await createClient();
   const { data, error } = await client.auth.getUser();
+  if (error && (error.status === 0 || (error.status ?? 0) >= 500))
+    throw new Error("Sign-in is temporarily unavailable. Please try again.");
   if (error || !data.user) return null;
-  const [{ data: profile }, { data: status, error: statusError }] = await Promise.all([
-    client
-      .from("profiles")
-      .select("id,username,display_name,bio,github_username,github_connected_at,created_at")
-      .eq("id", data.user.id)
-      .maybeSingle(),
-    client.rpc("my_account_status"),
-  ]);
-  // Fail closed if the authoritative account status cannot be read.
+  const [{ data: profile, error: profileError }, { data: status, error: statusError }] =
+    await Promise.all([
+      client
+        .from("profiles")
+        .select("id,username,display_name,bio,github_username,github_connected_at,created_at")
+        .eq("id", data.user.id)
+        .maybeSingle(),
+      client.rpc("my_account_status"),
+    ]);
+  if (
+    profileError ||
+    statusError ||
+    (!profile && status === "active") ||
+    !["active", "suspended", "deleting"].includes(status)
+  )
+    throw new Error("Your account couldn’t be loaded. Please try again.");
   return {
     id: data.user.id,
     profile: profile as Profile | null,
-    status: statusError ? "suspended" : status,
+    status,
   };
 });
 

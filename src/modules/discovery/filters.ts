@@ -21,12 +21,12 @@ export function filterScope(filters: Omit<FeedFilters, "cursor">) {
   return JSON.stringify([filters.feed, filters.category, [...filters.stack].sort(), filters.query]);
 }
 
-export function parseFilters(params: SearchParams): FeedFilters {
+export function parseFilters(params: SearchParams, allowFollowing = false): FeedFilters {
   const rawCategory = first(params.category) ?? "";
   const rawStack = Array.isArray(params.stack) ? params.stack : params.stack ? [params.stack] : [];
   const base = {
     feed:
-      first(params.tab) === "following"
+      allowFollowing && first(params.tab) === "following"
         ? ("following" as const)
         : first(params.tab) === "latest"
           ? ("latest" as const)

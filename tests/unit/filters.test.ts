@@ -6,6 +6,12 @@ describe("shareable feed filters", () => {
     expect(parseFilters({}).feed).toBe("popular");
     expect(parseFilters({ tab: "featured" }).feed).toBe("popular");
   });
+  it("keeps Following in its authenticated feed context", () => {
+    expect(parseFilters({ tab: "following" }).feed).toBe("popular");
+    const following = parseFilters({ tab: "following" }, true);
+    expect(following.feed).toBe("following");
+    expect(feedUrl(following, {}, "/api/discovery/projects")).toContain("tab=following");
+  });
   it("deduplicates stack filters and caps untrusted search input", () => {
     const filters = parseFilters({
       stack: ["react", "react", "bad slug", "python"],

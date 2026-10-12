@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowUpRight, Box } from "lucide-react";
 import { UpvoteButton } from "./upvote-button";
+import { SaveButton } from "./save-button";
 import type { ProjectSummary } from "@/modules/discovery/queries";
 
 export function ProjectCard({
@@ -52,6 +53,12 @@ export function ProjectCard({
             id={project.id}
             count={project.upvote_count}
             upvoted={project.viewer_upvoted}
+            access={project.vote_access}
+            compact
+          />
+          <SaveButton
+            id={project.id}
+            saved={project.viewer_saved}
             access={project.vote_access}
             compact
           />

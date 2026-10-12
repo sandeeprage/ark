@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   const params: SearchParams = {};
   for (const key of request.nextUrl.searchParams.keys())
     params[key] = request.nextUrl.searchParams.getAll(key);
-  const filters = parseFilters(params);
+  const filters = parseFilters(params, true);
   if (filters.feed === "following") {
     const viewer = await getViewer();
     if (!viewer || viewer.status !== "active" || !viewer.profile?.username)

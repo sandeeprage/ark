@@ -7,12 +7,19 @@ import { isStorageConfigured } from "@/lib/supabase/admin";
 import { ProjectForm } from "@/components/project-form";
 
 export const metadata = { title: "Edit project" };
-export default async function Edit({ params }: { params: Promise<{ id: string }> }) {
+export default async function Edit({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ saved?: string }>;
+}) {
   const { id } = await params;
   if (!z.uuid().safeParse(id).success) notFound();
   await requireViewer(`/projects/${id}/edit`);
   const [initial, catalogs] = await Promise.all([getMyProject(id), getCatalogs()]);
   if (!initial || !["published", "hidden"].includes(initial.status)) notFound();
+  const saved = (await searchParams).saved === "1";
   return (
     <div className="page publish-page">
       <p className="eyebrow">YOUR WORK, KEPT CURRENT</p>
@@ -20,6 +27,11 @@ export default async function Edit({ params }: { params: Promise<{ id: string }>
       <p className="page-description">
         Update the details and screenshots. Your original launch date stays the same.
       </p>
+      {saved && initial.status === "hidden" && (
+        <p className="notice" role="status">
+          Changes saved. This project remains hidden.
+        </p>
+      )}
       <ProjectForm
         key={`${id}:${initial.version}`}
         {...catalogs}

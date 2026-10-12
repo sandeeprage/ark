@@ -2,10 +2,13 @@ import { Github, LogOut } from "lucide-react";
 import { requireViewer } from "@/modules/auth/session";
 import { signOut } from "@/modules/auth/actions";
 import { ProfileForm } from "@/components/profile-form";
+import { NotificationPreferences } from "@/components/notification-controls";
+import { notificationPreferences } from "@/modules/notifications/queries";
 
 export const metadata = { title: "Settings" };
 export default async function Settings() {
   const viewer = await requireViewer("/settings");
+  const preferences = await notificationPreferences();
   return (
     <div className="page narrow-page">
       <p className="eyebrow">YOUR ACCOUNT</p>
@@ -33,9 +36,12 @@ export default async function Settings() {
           </div>
         </div>
         <p className="form-note">
-          Identity linking, notification preferences, and account erasure are scheduled for later
-          internal milestones.
+          Identity linking and account erasure are scheduled for later internal milestones.
         </p>
+      </section>
+      <section className="settings-section">
+        <h2>Notification preferences</h2>
+        <NotificationPreferences initial={preferences} />
       </section>
       <section className="settings-section">
         <form action={signOut}>

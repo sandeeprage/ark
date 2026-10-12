@@ -1,6 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
-import { getVisibleMedia } from "./media";
+import { createAdminClient, isStorageConfigured } from "@/lib/supabase/admin";
 import type { InitialProject, ProjectFormValues } from "@/components/project-form";
 
 export async function getMyProject(
@@ -13,6 +13,7 @@ export async function getMyProject(
   const raw = data as {
     project: {
       id: string;
+      maker_id: string;
       version: number;
       status: string;
       cover_media_id: string | null;
@@ -27,11 +28,25 @@ export async function getMyProject(
       category_id: string;
     };
     technology_ids: string[];
-    media: { id: string; alt_text: string }[];
+    media: { id: string; alt_text: string; object_key: string }[];
     pinned: boolean;
   };
-  const images = await getVisibleMedia([id]);
   const project = raw.project;
+  // get_my_project authorizes this owner before privileged signing. Hidden work
+  // remains editable by its owner without reissuing images through public reads.
+  if (
+    !isStorageConfigured() ||
+    raw.media.some((image) => !image.object_key?.startsWith(`${project.maker_id}/${project.id}/`))
+  )
+    throw new Error("Your screenshots couldn’t be loaded. Please try again.");
+  const { data: images, error: imageError } = await createAdminClient()
+    .storage.from("ark-media")
+    .createSignedUrls(
+      raw.media.map((image) => image.object_key),
+      300,
+    );
+  if (imageError || !images || images.some((image) => !image.signedUrl))
+    throw new Error("Your screenshots couldn’t be loaded. Please try again.");
   const values: ProjectFormValues = {
     name: project.name,
     tagline: project.tagline,
@@ -51,10 +66,10 @@ export async function getMyProject(
     status: project.status,
     cover_media_id: project.cover_media_id,
     values,
-    media: raw.media.map((image) => ({
+    media: raw.media.map((image, index) => ({
       id: image.id,
       alt_text: image.alt_text,
-      url: images.find((signed) => signed.id === image.id)?.url ?? "",
+      url: images[index].signedUrl!,
     })),
     pinned: raw.pinned,
     name: project.name,

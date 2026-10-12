@@ -48,6 +48,7 @@ export function safeReturnPath(value: unknown): string {
   if (
     /^\/(explore|following|search|publish|collections|notifications|settings)$/.test(path) ||
     /^\/projects\/[0-9a-f-]{36}(\/edit)?$/.test(path) ||
+    /^\/collections\/[0-9a-f-]{36}$/.test(path) ||
     /^\/makers\/[a-z0-9_]{3,30}(\/(followers|following))?$/.test(path)
   )
     return value;

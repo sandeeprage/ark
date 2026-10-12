@@ -10,6 +10,8 @@ import { getViewer } from "@/modules/auth/session";
 import { getMyProject } from "@/modules/projects/management";
 import { ProjectGallery } from "@/components/project-gallery";
 import { ProjectManagement } from "@/components/project-management";
+import { SaveButton } from "@/components/save-button";
+import { getSavedStates } from "@/modules/collections/queries";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const project = await getPublicProject((await params).id);
@@ -35,6 +37,7 @@ export default async function Project({ params }: { params: Promise<{ id: string
   if (!project) notFound();
   const [images, viewer] = await Promise.all([getProjectMedia(project.id), getViewer()]);
   const [vote] = await getVoteStates([project]);
+  const saved = await getSavedStates([project]);
   const management =
     viewer?.id === project.maker_id && viewer.status === "active"
       ? await getMyProject(project.id)
@@ -99,6 +102,11 @@ export default async function Project({ params }: { params: Promise<{ id: string
             access={vote.vote_access}
           />
           <ShareButton title={project.name} url={url} />
+          <SaveButton
+            id={project.id}
+            saved={saved.includes(project.id)}
+            access={vote.vote_access}
+          />
         </div>
         {management && (
           <ProjectManagement id={project.id} name={project.name} pinned={management.pinned} />

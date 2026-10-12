@@ -42,6 +42,14 @@ test("maker publishes validated images, edits, pins, and deletes", async ({
   page,
   request,
 }, testInfo) => {
+  await page.addInitScript(() => {
+    for (const method of ["getItem", "setItem", "removeItem"])
+      Object.defineProperty(Storage.prototype, method, {
+        value: () => {
+          throw new DOMException("Storage blocked", "SecurityError");
+        },
+      });
+  });
   await page.goto("/publish");
   await expect(page.getByRole("heading", { name: "Give your work a home." })).toBeVisible();
   await page.getByLabel("Project name", { exact: true }).fill("Fixture toolkit");
@@ -85,9 +93,31 @@ test("maker publishes validated images, edits, pins, and deletes", async ({
   expect(state.assetStates).toEqual(["consumed", "consumed"]);
   await page.getByRole("button", { name: "Pin on profile" }).click();
   await expect(page.getByRole("button", { name: "Unpin", exact: true })).toBeVisible();
+  const enlarge = page.getByRole("button", {
+    name: "Enlarge: A second toolkit screen",
+    exact: true,
+  });
+  await enlarge.click();
+  await page.getByRole("button", { name: "Close screenshot", exact: true }).click();
+  await expect(enlarge).toBeFocused();
+  await request.post("http://127.0.0.1:55431/__hide_project");
   await page.getByRole("link", { name: "Edit", exact: true }).click();
+  await expect(
+    page.getByText("This project is hidden. Saving edits preserves its moderation status."),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("img", { name: "A second toolkit screen", exact: true }),
+  ).toBeVisible();
   await page.getByLabel("Project name", { exact: true }).fill("Updated fixture toolkit");
   await page.getByRole("button", { name: "Save changes", exact: true }).click();
+  await expect(page.getByRole("status")).toContainText(
+    "Changes saved. This project remains hidden.",
+  );
+  expect((await (await request.get("http://127.0.0.1:55431/__state")).json()).project.status).toBe(
+    "hidden",
+  );
+  await request.post("http://127.0.0.1:55431/__restore_project");
+  await page.goto("/projects/10000000-0000-4000-a000-000000000001");
   await expect(
     page.getByRole("heading", { name: "Updated fixture toolkit", exact: true }),
   ).toBeVisible();

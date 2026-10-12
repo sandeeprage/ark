@@ -1,13 +1,16 @@
 import { requireViewer } from "@/modules/auth/session";
-import { MilestoneState } from "@/components/milestone-state";
+import { listCollections } from "@/modules/collections/queries";
+import { CollectionManager } from "@/components/collection-manager";
 export const metadata = { title: "Collections" };
 export default async function Collections() {
-  await requireViewer("/collections");
+  const viewer = await requireViewer("/collections");
+  const collections = await listCollections(viewer.id);
   return (
-    <MilestoneState
-      title="Keep the work that inspires you."
-      description="Collections will let you save projects into public lists. Anyone can view every collection, including Saved."
-      phase="COLLECTIONS"
-    />
+    <div className="page narrow-page">
+      <p className="eyebrow">YOUR PUBLIC LIBRARY</p>
+      <h1>Collections</h1>
+      <p className="page-description">Curate the projects that speak to you.</p>
+      <CollectionManager collections={collections} />
+    </div>
   );
 }

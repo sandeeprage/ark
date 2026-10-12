@@ -27,6 +27,11 @@ let followed = false;
 let failFollow = false;
 let authCodes = new Map();
 let authMode = "active";
+let collections = [];
+let memberships = new Map();
+let notices = [];
+let preferences = { follows: true, upvotes: true, launches: true };
+let failSave = false;
 function authSession() {
   const expires = Math.floor(Date.now() / 1000) + 3600;
   const jwt = [
@@ -82,6 +87,11 @@ const server = http.createServer(async (request, response) => {
   try {
     if (path === "/__health") return json({ ready: true });
     if (path === "/__reset") {
+      collections = [];
+      memberships = new Map();
+      notices = [];
+      preferences = { follows: true, upvotes: true, launches: true };
+      failSave = false;
       followed = false;
       failFollow = false;
       project = null;
@@ -100,6 +110,28 @@ const server = http.createServer(async (request, response) => {
       authMode = body().mode;
       return json({ ready: true });
     }
+    if (path === "/__fail_save") {
+      failSave = true;
+      return json({ ready: true });
+    }
+    if (path === "/__seed_notices") {
+      notices = Array.from({ length: 25 }, (_, i) => ({
+        id: `80000000-0000-4000-a000-${String(i + 1).padStart(12, "0")}`,
+        type: "follow",
+        created_at: new Date(Date.now() - i * 1000).toISOString(),
+        read_at: null,
+        actor_username: "other_maker",
+        actor_name: "Other maker",
+        project_id: null,
+        project_name: null,
+      }));
+      return json({ ready: true });
+    }
+    if (path === "/__hide_project") {
+      project.status = "hidden";
+      return json({ ready: true });
+    }
+    if(path === "/__restore_project"){project.status="published";return json({ready:true});}
     if (path === "/__seed_discovery") {
       discovery = Array.from({ length: 25 }, (_, i) => ({
         id: `10000000-0000-4000-a000-${String(i + 1).padStart(12, "0")}`,
@@ -158,7 +190,8 @@ const server = http.createServer(async (request, response) => {
       failFollow = true;
       return json({ ok: true });
     }
-    if (path === "/auth/v1/logout") return json(null);
+    if (path === "/auth/v1/logout")
+      return authMode === "logout_error" ? json({ message: "Fixture outage" }, 503) : json(null);
     if (path === "/auth/v1/user")
       return request.headers.authorization?.includes("eyJ")
         ? json(user)
@@ -188,6 +221,119 @@ const server = http.createServer(async (request, response) => {
       if (name === "my_account_status")
         return json(authMode === "suspended" ? "suspended" : "active");
       if (name === "sync_my_github_identity") return json(null);
+      if (name === "list_collections")
+        return json(
+          collections.map((c) => ({ ...c, project_count: memberships.get(c.id)?.size ?? 0 })),
+        );
+      if (name === "get_public_collection") {
+        const c = collections.find((c) => c.id === input.p_collection);
+        return json(
+          c ? { ...c, maker_username: "fixture_maker", maker_name: "Fixture maker" } : null,
+        );
+      }
+      if (name === "get_my_saved_projects")
+        return json(
+          input.p_projects
+            .filter((id) => [...memberships.values()].some((items) => items.has(id)))
+            .map((project_id) => ({ project_id })),
+        );
+      if (name === "get_my_collection_picker")
+        return json(
+          collections.map((c) => ({
+            id: c.id,
+            title: c.title,
+            is_default: c.is_default,
+            contains_project: memberships.get(c.id)?.has(input.p_project) ?? false,
+          })),
+        );
+      if (name === "create_collection") {
+        if (!collections.some((c) => c.id === input.p_id)) {
+          collections.push({
+            id: input.p_id,
+            owner_id: owner,
+            title: input.p_title,
+            description: input.p_description,
+            is_default: false,
+          });
+          memberships.set(input.p_id, new Set());
+        }
+        return json(input.p_id);
+      }
+      if (name === "update_collection") {
+        Object.assign(
+          collections.find((c) => c.id === input.p_collection),
+          { title: input.p_title, description: input.p_description },
+        );
+        return json(null);
+      }
+      if (name === "delete_collection") {
+        collections = collections.filter((c) => c.id !== input.p_collection);
+        memberships.delete(input.p_collection);
+        return json(null);
+      }
+      if (name === "set_collection_item") {
+        if (failSave) {
+          failSave = false;
+          return json({ code: "42501" }, 403);
+        }
+        let id = input.p_collection;
+        if (!id) {
+          id = collections.find((c) => c.is_default)?.id;
+          if (!id && input.p_desired) {
+            id = randomUUID();
+            collections.unshift({
+              id,
+              owner_id: owner,
+              title: "Saved",
+              description: "",
+              is_default: true,
+            });
+            memberships.set(id, new Set());
+          }
+        }
+        if (id) {
+          if (input.p_desired) memberships.get(id).add(input.p_project);
+          else memberships.get(id).delete(input.p_project);
+        }
+        return json({
+          collection_id: id ?? null,
+          saved: [...memberships.values()].some((items) => items.has(input.p_project)),
+        });
+      }
+      if (name === "list_collection_projects") {
+        const ids = memberships.get(input.p_collection) ?? new Set();
+        return json(
+          (discovery ?? (summary() ? [summary()] : []))
+            .filter((p) => ids.has(p.id))
+            .map((p) => ({ ...p, added_at: "2026-10-13T00:00:00Z" })),
+        );
+      }
+      if (name === "get_my_notification_status")
+        return json({
+          unread: notices.filter((n) => !n.read_at).length,
+          cutoff: new Date().toISOString(),
+        });
+      if (name === "list_my_notifications")
+        return json(
+          notices
+            .slice(input.p_after_id ? notices.findIndex((n) => n.id === input.p_after_id) + 1 : 0)
+            .slice(0, input.p_limit ?? 21),
+        );
+      if (name === "mark_my_notifications_read") {
+        for (const n of notices)
+          if (input.p_ids?.includes(n.id) || (input.p_cutoff && n.created_at <= input.p_cutoff))
+            n.read_at ||= new Date().toISOString();
+        return json(null);
+      }
+      if (name === "get_my_notification_preferences") return json(preferences);
+      if (name === "update_my_notification_preferences") {
+        preferences = {
+          follows: input.p_follows,
+          upvotes: input.p_upvotes,
+          launches: input.p_launches,
+        };
+        return json(null);
+      }
       if (name === "get_public_profile")
         return json([
           {
@@ -300,7 +446,7 @@ const server = http.createServer(async (request, response) => {
             is_cover: id === input.p_cover,
           };
         });
-        project.status = "published";
+        if(name === "publish_project")project.status = "published";
         project.published_at ||= new Date().toISOString();
         project.cover_media_id = input.p_cover;
         project.version++;
