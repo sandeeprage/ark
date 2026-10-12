@@ -1,0 +1,12 @@
+node_modules
+.next
+.next-publishing-tests
+.next-production-checks
+.git
+.local-postgres
+.local-postgres-check
+package-lock.json
+test-results
+playwright-report
+docs/product-specification.md
+AGENTS.md

@@ -1,0 +1,11 @@
+.git
+.env*
+!.env.example
+.next*
+.local-postgres*
+node_modules
+test-results
+playwright-report
+coverage
+tests
+docs

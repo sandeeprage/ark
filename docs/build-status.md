@@ -1,0 +1,32 @@
+# Build status — 12 October 2026
+
+ARK is an internal development build. No public beta or production deployment has been opened.
+
+| Milestone                      | Status                                                 | Remaining gate                                                                                                                                                  |
+| ------------------------------ | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0 — Foundation                 | Implemented; connected to Supabase; migrations applied | Managed authenticated-user API checks and complete admin authorization coverage                                                                                 |
+| 1 — Identity and profiles      | OAuth/onboarding/profile first slice implemented       | Real GitHub/Google callbacks, denied consent, provider scopes/cookies, imports, optional linking/disconnection, full settings and real-provider isolation tests |
+| 2 — Projects and media         | Publishing and media journey implemented               | Deployed maintenance scheduling and broader upload failure checks                                                                                               |
+| 3 — Discovery and upvotes      | Feed/search/filter/upvotes implemented                 | Broader managed-provider voting smoke tests and discovery load checks                                                                                           |
+| 4 — Social                     | Deferred                                               | Follows and public lists, Following feed, public collections/Save disclosure, transactional notification generation and read/preferences                        |
+| 5 — Credibility and moderation | Protected roles/account state only                     | Repository checks, reports, admin tools, durable audit and visibility invalidation                                                                              |
+| 6 — Hardening                  | Deferred                                               | Rate limits, generated database types, account erasure, maintenance, operational logs/alerts, backup restore, full accessibility and load checks                |
+| 7 — Invited beta               | Closed                                                 | All launch acceptance criteria and real permissioned projects                                                                                                   |
+
+## Current verification
+
+Local verification includes 45 unit checks, 8 foundation browser checks, 6 desktop/mobile publishing/discovery workflows, and 92 database authorization/read/project/vote checks plus concurrent vote requests. Type checking, lint, and a production build also run. PostgreSQL tests use an isolated cluster with a minimal Auth contract stub. Desktop light/dark and 360 px mobile previews were visually inspected.
+
+All seven migrations were applied transactionally through the Supabase SQL editor to project `arucpxjpndqqbbpwsnjy`, after confirming that `public` and `private` had no existing tables. The publishable-key API now returns successful catalog, feed, and public-profile reads. No synthetic makers, projects, or votes were inserted into this project. The user published the real Momentstamp project under @sndp. The dashboard labels this project's default branch **production**; use a separate project or branch before a future public rollout. GitHub is enabled and a real maker completed sign-in/onboarding. Google remains disabled.
+
+SQL editor application does not register the files in CLI migration history. Before adopting `supabase db push` for this project, record these seven versions as applied using Supabase's migration repair workflow; do not re-run the CREATE statements against the existing schema.
+
+Live read-only checks also confirmed that all ten application tables have RLS enabled, direct authenticated inserts/updates are denied, private tables have no anonymous read grants, and anonymous API access to raw votes, media paths, private settings and account status is denied.
+
+Explore and search append keyset pages in place, deduplicate IDs across rank changes, and offer Refresh when top results change. Filters reset the loaded result set. Background checks run at most once per minute and on window focus; snapshot ranking remains deferred. Maker-profile pagination still navigates to the next page.
+
+Project and upvote writes are available only through authorized transaction functions. Follow and collection writes remain denied until their transaction functions exist. Feature routes show sign-in gates and explicit milestone states. Public project details and canonical sharing are implemented; private screenshots, owner controls, and profile pins are implemented; upvotes and maker totals are implemented; follow and collection controls await their slices. Counts are derived only from active vote rows; raw voter identities stay private.
+
+## Next slice
+
+Real GitHub sign-in and Momentstamp publication with screenshot delivery were verified against managed Supabase. Next implement follows, Following, and recipient-private notification UI. Vercel deployment configuration schedules authenticated media maintenance daily; confirm the configured cron and deployed endpoint before rollout. Publishing browser tests use an isolated localhost protocol fixture; PostgreSQL tests independently check authorization, idempotency, version conflicts, notification fanout, visibility, and cleanup retries.

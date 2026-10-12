@@ -1,0 +1,14 @@
+node_modules/
+.next/
+.next-publishing-tests/
+.next-production-checks/
+out/
+.env*
+!.env.example
+*.tsbuildinfo
+playwright-report/
+test-results/
+.vercel/
+coverage/
+.local-postgres/
+.local-postgres-check/
