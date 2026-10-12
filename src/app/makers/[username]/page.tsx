@@ -8,6 +8,8 @@ import { listProjects } from "@/modules/discovery/queries";
 import { ProjectCard } from "@/components/project-card";
 import { EmptyState } from "@/components/empty-state";
 import { getPinnedProjects } from "@/modules/projects/pins";
+import { getFollowState } from "@/modules/following/queries";
+import { FollowButton } from "@/components/follow-button";
 
 export async function generateMetadata({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
@@ -24,11 +26,12 @@ export default async function Maker({
   const profile = await getPublicProfile(username);
   if (!profile) notFound();
   const filters = parseFilters({ ...(await searchParams), tab: "latest" });
-  const [viewer, result, pinned, totals] = await Promise.all([
+  const [viewer, result, pinned, totals, follows] = await Promise.all([
     getViewer(),
     listProjects(filters, profile.id),
     getPinnedProjects(profile.id),
     getMakerTotals(profile.id),
+    getFollowState(profile.id),
   ]);
   return (
     <div className="page">
@@ -68,6 +71,30 @@ export default async function Maker({
             <Link href="/settings" className="button button-outline">
               Edit profile
             </Link>
+          )}
+          {follows ? (
+            <>
+              <p className="maker-totals">
+                <Link href={`/makers/${username}/followers`}>{follows.followers} followers</Link> ·{" "}
+                <Link href={`/makers/${username}/following`}>{follows.following} following</Link>
+              </p>
+              {viewer?.id !== profile.id && (
+                <FollowButton
+                  id={profile.id}
+                  username={username}
+                  initial={follows}
+                  access={
+                    !viewer
+                      ? "anonymous"
+                      : viewer.status === "active" && viewer.profile?.username
+                        ? "active"
+                        : "restricted"
+                  }
+                />
+              )}
+            </>
+          ) : (
+            <p className="maker-totals">Following is temporarily unavailable.</p>
           )}
         </aside>
         <section className="maker-projects">

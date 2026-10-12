@@ -1561,3 +1561,24 @@ main {
     font-size: 14px;
   }
 }
+.follow-control {
+  display: grid;
+  gap: 8px;
+}
+.connection-list {
+  list-style: none;
+  padding: 0;
+}
+.connection-list li {
+  padding: 24px 0;
+  border-bottom: 1px solid var(--border);
+}
+.connection-list a {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.connection-list p {
+  margin-top: 8px;
+  overflow-wrap: anywhere;
+}

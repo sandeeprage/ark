@@ -10,7 +10,7 @@ const cursorSchema = z.object({
 });
 export type FeedCursor = z.infer<typeof cursorSchema>;
 export type FeedFilters = {
-  feed: "popular" | "latest";
+  feed: "popular" | "latest" | "following";
   category: string;
   stack: string[];
   query: string;
@@ -25,7 +25,12 @@ export function parseFilters(params: SearchParams): FeedFilters {
   const rawCategory = first(params.category) ?? "";
   const rawStack = Array.isArray(params.stack) ? params.stack : params.stack ? [params.stack] : [];
   const base = {
-    feed: first(params.tab) === "latest" ? ("latest" as const) : ("popular" as const),
+    feed:
+      first(params.tab) === "following"
+        ? ("following" as const)
+        : first(params.tab) === "latest"
+          ? ("latest" as const)
+          : ("popular" as const),
     category: slug.test(rawCategory) ? rawCategory : "",
     stack: [...new Set(rawStack.filter((item) => slug.test(item)))].sort().slice(0, 10),
     query: (first(params.q) ?? "").trim().slice(0, 100),
@@ -52,7 +57,7 @@ export function feedUrl(
 ) {
   const next = { ...filters, ...changes };
   const params = new URLSearchParams();
-  if (next.feed === "latest") params.set("tab", "latest");
+  if (next.feed !== "popular") params.set("tab", next.feed);
   if (next.category) params.set("category", next.category);
   next.stack.forEach((item) => params.append("stack", item));
   if (next.query) params.set("q", next.query);

@@ -23,6 +23,8 @@ let pinned = false;
 let discovery = null;
 let votes = new Set();
 let failVote = false;
+let followed = false;
+let failFollow = false;
 let authCodes = new Map();
 let authMode = "active";
 function authSession() {
@@ -80,6 +82,8 @@ const server = http.createServer(async (request, response) => {
   try {
     if (path === "/__health") return json({ ready: true });
     if (path === "/__reset") {
+      followed = false;
+      failFollow = false;
       project = null;
       assets = new Map();
       files = new Map();
@@ -150,6 +154,10 @@ const server = http.createServer(async (request, response) => {
         return json({ error_code: "bad_code_verifier", msg: "Fixture verifier mismatch" }, 400);
       return json(authSession());
     }
+    if (path === "/__fail_follow") {
+      failFollow = true;
+      return json({ ok: true });
+    }
     if (path === "/auth/v1/logout") return json(null);
     if (path === "/auth/v1/user")
       return request.headers.authorization?.includes("eyJ")
@@ -180,6 +188,41 @@ const server = http.createServer(async (request, response) => {
       if (name === "my_account_status")
         return json(authMode === "suspended" ? "suspended" : "active");
       if (name === "sync_my_github_identity") return json(null);
+      if (name === "get_public_profile")
+        return json([
+          {
+            id: "00000000-0000-4000-a000-000000000002",
+            username: "other_maker",
+            display_name: "Other maker",
+            bio: "A test maker",
+            github_username: null,
+            github_connected_at: null,
+            created_at: "2026-10-12T00:00:00Z",
+          },
+        ]);
+      if (name === "get_maker_follow_state")
+        return json({ followers: Number(followed), following: 0, followed });
+      if (name === "set_maker_follow") {
+        if (failFollow) {
+          failFollow = false;
+          return json({ code: "42501", message: "Fixture denial" }, 403);
+        }
+        followed = input.p_desired;
+        return json({ followers: Number(followed), following: 0, followed });
+      }
+      if (name === "list_maker_connections")
+        return json(
+          followed
+            ? [
+                {
+                  id: owner,
+                  username: "fixture_maker",
+                  display_name: "Fixture maker",
+                  bio: "Browser fixture only",
+                },
+              ]
+            : [],
+        );
       if (name === "get_public_maker_totals")
         return json({ projects: discovery?.length ?? (summary() ? 1 : 0), upvotes: votes.size });
       if (name === "get_my_project_votes")
@@ -267,6 +310,7 @@ const server = http.createServer(async (request, response) => {
         return json(
           discovery ? discovery.filter((p) => p.id === input.p_id) : summary() ? [summary()] : [],
         );
+      if (name === "list_projects") if (input.p_feed === "following" && !followed) return json([]);
       if (name === "list_projects")
         return json(
           discovery
