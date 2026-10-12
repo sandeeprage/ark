@@ -2,7 +2,7 @@
 
 - Private source repository: https://github.com/sandeeprage/ark
 - Vercel project: `sandeeprages-projects/ark`
-- Production origin: https://ark-nine-dusky.vercel.app
+- Production origin: https://ark-rage.vercel.app
 - Runtime: Node.js 22, Next.js 16.4
 
 Production environment variables are managed in Vercel. `SUPABASE_SECRET_KEY` and `CRON_SECRET` are server-only secrets; never commit environment files or put those keys in `NEXT_PUBLIC_` variables. Preview environment variables have not been configured.
@@ -11,7 +11,7 @@ The application uses the existing Supabase project. Its migrations were applied 
 
 ## Authentication
 
-Supabase Auth must use `https://ark-nine-dusky.vercel.app` as its Site URL and allow the exact redirect `https://ark-nine-dusky.vercel.app/auth/callback`. Retain local callback URLs for development. The GitHub OAuth application's callback remains the Supabase `/auth/v1/callback` URL; it does not change to the Vercel origin.
+Supabase Auth must use `https://ark-rage.vercel.app` as its Site URL and allow the exact redirect `https://ark-rage.vercel.app/auth/callback`. Retain local callback URLs for development. The GitHub OAuth application's callback remains the Supabase `/auth/v1/callback` URL; it does not change to the Vercel origin.
 
 ## Deploying updates
 
