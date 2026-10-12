@@ -1,6 +1,6 @@
 # Build status — 12 October 2026
 
-ARK is an internal development build. No public beta or production deployment has been opened.
+ARK is an internal development build deployed at https://ark-nine-dusky.vercel.app. The invited public beta remains closed. Source is stored in the private https://github.com/sandeeprage/ark repository. GitHub Actions application and database jobs passed.
 
 | Milestone                      | Status                                                 | Remaining gate                                                                                                                                                  |
 | ------------------------------ | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -29,4 +29,4 @@ Project and upvote writes are available only through authorized transaction func
 
 ## Next slice
 
-Real GitHub sign-in and Momentstamp publication with screenshot delivery were verified against managed Supabase. Next implement follows, Following, and recipient-private notification UI. Vercel deployment configuration schedules authenticated media maintenance daily; confirm the configured cron and deployed endpoint before rollout. Publishing browser tests use an isolated localhost protocol fixture; PostgreSQL tests independently check authorization, idempotency, version conflicts, notification fanout, visibility, and cleanup retries.
+Real GitHub sign-in and Momentstamp publication with screenshot delivery were verified against managed Supabase. Next implement follows, Following, and recipient-private notification UI. Vercel deployment configuration schedules authenticated media maintenance daily. Unauthenticated endpoint checks passed; manual destructive cleanup was not run. Confirm the first scheduled run before rollout. Production OAuth redirects and automatic private GitHub deployment linking require account configuration. See deployment.md. Publishing browser tests use an isolated localhost protocol fixture; PostgreSQL tests independently check authorization, idempotency, version conflicts, notification fanout, visibility, and cleanup retries.

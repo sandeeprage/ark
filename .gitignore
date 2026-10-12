@@ -12,3 +12,6 @@ test-results/
 coverage/
 .local-postgres/
 .local-postgres-check/
+
+.vercel
+.env*

@@ -13,7 +13,7 @@
     "test:publishing": "playwright test -c playwright.publishing.config.ts"
   },
   "engines": {
-    "node": ">=22.13.0"
+    "node": "22.x"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
