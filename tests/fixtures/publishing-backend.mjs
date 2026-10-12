@@ -1,7 +1,7 @@
 // Disposable protocol fixture. Used only on localhost:55431 by the isolated
 // publishing browser tests. It never connects to or inserts content into Supabase.
 import http from "node:http";
-import { randomUUID } from "node:crypto";
+import { randomUUID, createHash } from "node:crypto";
 const owner = "00000000-0000-4000-a000-000000000001",
   projectId = "10000000-0000-4000-a000-000000000001",
   categoryId = "20000000-0000-4000-a000-000000000001",
@@ -23,6 +23,27 @@ let pinned = false;
 let discovery = null;
 let votes = new Set();
 let failVote = false;
+let authCodes = new Map();
+let authMode = "active";
+function authSession() {
+  const expires = Math.floor(Date.now() / 1000) + 3600;
+  const jwt = [
+    { alg: "HS256", typ: "JWT" },
+    { sub: owner, exp: expires, role: "authenticated" },
+    "fixture-signature",
+  ]
+    .map((p) => Buffer.from(typeof p === "string" ? p : JSON.stringify(p)).toString("base64url"))
+    .join(".");
+  return {
+    access_token: jwt,
+    refresh_token: "fixture-refresh",
+    expires_in: 3600,
+    token_type: "bearer",
+    user,
+    provider_token: "fixture-provider-token",
+    provider_refresh_token: "fixture-provider-refresh",
+  };
+}
 function summary() {
   return project?.status === "published"
     ? {
@@ -67,6 +88,12 @@ const server = http.createServer(async (request, response) => {
       discovery = null;
       votes = new Set();
       failVote = false;
+      authCodes = new Map();
+      authMode = "active";
+      return json({ ready: true });
+    }
+    if (path === "/__auth_mode") {
+      authMode = body().mode;
       return json({ ready: true });
     }
     if (path === "/__seed_discovery") {
@@ -101,16 +128,41 @@ const server = http.createServer(async (request, response) => {
         assetStates: [...assets.values()].map((asset) => asset.state),
         processedImages: [...files.keys()].filter((key) => key.startsWith("ark-media/")),
       });
+    if (path === "/auth/v1/authorize") {
+      const code = randomUUID();
+      authCodes.set(code, url.searchParams.get("code_challenge"));
+      const destination = new URL(url.searchParams.get("redirect_to"));
+      destination.searchParams.set("code", code);
+      response.writeHead(302, { Location: destination.toString() });
+      response.end();
+      return;
+    }
+    if (path === "/auth/v1/token") {
+      const input = body(),
+        challenge = authCodes.get(input.auth_code);
+      authCodes.delete(input.auth_code);
+      if (
+        !challenge ||
+        createHash("sha256")
+          .update(input.code_verifier ?? "")
+          .digest("base64url") !== challenge
+      )
+        return json({ error_code: "bad_code_verifier", msg: "Fixture verifier mismatch" }, 400);
+      return json(authSession());
+    }
+    if (path === "/auth/v1/logout") return json(null);
     if (path === "/auth/v1/user")
       return request.headers.authorization?.includes("eyJ")
         ? json(user)
         : json({ message: "No session", code: "bad_jwt" }, 401);
     if (path === "/auth/v1/settings") return json({ external: { github: true, google: false } });
+    if (path === "/rest/v1/profiles" && authMode === "profile_error")
+      return json({ code: "PGRST000", message: "Fixture profile unavailable" }, 503);
     if (path === "/rest/v1/profiles")
       return json([
         {
           id: owner,
-          username: "fixture_maker",
+          username: authMode === "onboarding" ? null : "fixture_maker",
           display_name: "Fixture maker",
           bio: "Browser fixture only",
           github_username: "fixture_maker",
@@ -125,7 +177,9 @@ const server = http.createServer(async (request, response) => {
     if (path.startsWith("/rest/v1/rpc/")) {
       const name = path.split("/").pop(),
         input = body();
-      if (name === "my_account_status") return json("active");
+      if (name === "my_account_status")
+        return json(authMode === "suspended" ? "suspended" : "active");
+      if (name === "sync_my_github_identity") return json(null);
       if (name === "get_public_maker_totals")
         return json({ projects: discovery?.length ?? (summary() ? 1 : 0), upvotes: votes.size });
       if (name === "get_my_project_votes")

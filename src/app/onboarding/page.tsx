@@ -12,9 +12,9 @@ export default async function Onboarding({
   searchParams: Promise<SearchParams>;
 }) {
   const viewer = await getViewer();
-  if (!viewer) redirect("/login");
-  if (viewer.status !== "active") redirect("/account-restricted");
   const next = safeReturnPath((await searchParams).next);
+  if (!viewer) redirect(`/login?next=${encodeURIComponent(next)}`);
+  if (viewer.status !== "active") redirect("/account-restricted");
   if (viewer.profile?.username) redirect(next);
   return (
     <div className="page narrow-page">

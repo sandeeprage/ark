@@ -39,11 +39,12 @@ export function safeReturnPath(value: unknown): string {
     typeof value !== "string" ||
     value.length > 500 ||
     /[\\\x00-\x1f\x7f]/.test(value) ||
-    /%/i.test(value)
+    value.includes("#")
   )
     return "/explore";
   if (!value.startsWith("/") || value.startsWith("//")) return "/explore";
   const [path] = value.split("?");
+  if (path.includes("%")) return "/explore";
   if (
     /^\/(explore|following|search|publish|collections|notifications|settings)$/.test(path) ||
     /^\/projects\/[0-9a-f-]{36}(\/edit)?$/.test(path) ||

@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/config";
 import { profileSchema, safeReturnPath } from "./validation";
+import { headers } from "next/headers";
+import { configuredAuthOrigin, loginDestination } from "./redirects";
 
 export type FormState = { error?: string; success?: string; fields?: Record<string, string[]> };
 
@@ -12,9 +14,11 @@ export async function signIn(form: FormData) {
   const provider = form.get("provider");
   if (provider !== "github" && provider !== "google") redirect("/login?error=provider");
   const returnPath = safeReturnPath(form.get("next"));
-  const client = await createClient();
-  const origin = process.env.NEXT_PUBLIC_SITE_URL;
+  const origin = configuredAuthOrigin();
   if (!origin) redirect("/login?error=setup");
+  const host = (await headers()).get("host");
+  if (host !== new URL(origin).host) redirect(loginDestination(origin, returnPath).toString());
+  const client = await createClient();
   const { data, error } = await client.auth.signInWithOAuth({
     provider,
     options: {
@@ -27,7 +31,7 @@ export async function signIn(form: FormData) {
 }
 
 export async function signOut() {
-  if (isSupabaseConfigured()) await (await createClient()).auth.signOut();
+  if (isSupabaseConfigured()) await (await createClient()).auth.signOut({ scope: "local" });
   redirect("/explore");
 }
 
