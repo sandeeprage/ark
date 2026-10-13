@@ -697,7 +697,7 @@ main {
   font-size: 9px;
 }
 .discovery-aside {
-  padding-top: 3px;
+  margin-top: -28px;
 }
 .community-note {
   background: var(--surface);
