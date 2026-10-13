@@ -37,11 +37,11 @@ export default async function Login({ searchParams }: { searchParams: Promise<Se
     );
   const providers = await getAuthProviders();
   return (
-    <div className="auth-page">
+    <main className="auth-page">
       <div className="auth-card">
-        <span className="auth-mark">
+        <Link href="/" className="auth-mark" aria-label="ARK home">
           <Layers3 size={30} strokeWidth={1.4} />
-        </span>
+        </Link>
         <p className="eyebrow">WELCOME TO ARK</p>
         <h1>
           Made something?
@@ -92,6 +92,6 @@ export default async function Login({ searchParams }: { searchParams: Promise<Se
         </Link>
       </div>
       <p className="auth-bottom">Your work speaks for itself. Give it a home.</p>
-    </div>
+    </main>
   );
 }

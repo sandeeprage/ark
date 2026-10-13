@@ -31,6 +31,8 @@ test("private routes gate visitors and explain OAuth availability", async ({ pag
   await page.goto("/publish");
   await expect(page).toHaveURL(/\/login\?next=/);
   await expect(page.getByRole("heading", { name: "Made something? Make it known." })).toBeVisible();
+  await expect(page.locator(".sidebar, .mobile-header, .topbar")).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "ARK home" })).toHaveAttribute("href", "/");
   if (await page.getByText(/OAuth is ready to connect|sign-in need to be enabled/).isVisible()) {
     await expect(page.getByRole("button", { name: "Continue with GitHub" })).toBeDisabled();
     await expect(page.getByRole("button", { name: "Continue with Google" })).toBeDisabled();

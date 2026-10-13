@@ -950,9 +950,11 @@ main {
   font-size: 34px;
 }
 .auth-page {
+  min-height: 100dvh;
   padding: 68px 24px 50px;
   display: flex;
   align-items: center;
+  justify-content: center;
   flex-direction: column;
 }
 .auth-card {
