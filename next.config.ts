@@ -4,6 +4,7 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   devIndicators: false,
   agentRules: false,
+  images: { deviceSizes: [360, 640, 768, 1024, 1280], imageSizes: [160, 240, 320, 480, 960] },
   experimental: { serverActions: { bodySizeLimit: "3mb" } },
   distDir: process.env.ARK_TEST_DIST_DIR || ".next",
   async headers() {

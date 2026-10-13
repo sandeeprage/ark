@@ -16,14 +16,16 @@ The Explore LCP element was the first project cover. The trace measured a 2.66-s
 
 - The first feed cover loads eagerly with high fetch priority. Remaining covers stay lazy-loaded, including appended pages.
 - Function region is configured as `hnd1`, alongside Supabase, following [Vercel's guidance](https://vercel.com/docs/functions/configuring-functions/region). Static assets remain on the CDN.
-- Media remains private with short-lived signed URLs. Responsive derivatives remain a follow-up: the trace estimates 92 KiB of excess image bytes. Shared image caching was not introduced.
+- Responsive covers now use a visibility-checked same-origin thumbnail route at ten bounded widths, up to 1280 pixels. It reads only an authorized public cover, downloads privately, strips metadata and resizes without enlargement. Responses are `private, no-store`; gallery originals remain on short-lived signed URLs. Cover metadata no longer waits for signing, and storage paths are not sent to the feed. Shared image caching was not introduced.
 - Cleanup prioritizes up to five account-erasure jobs, then up to ten media jobs. It claims individually, stops admitting jobs at 35 seconds, cancels work at 45 seconds, and reserves a separate bounded client to record failures. Unstarted jobs remain unleased.
 - Workers catch transport exceptions and record retryable failures. Media lists are preflighted, including bucket validation, before any removal. Storage removals use batches of at most 100 paths. Auth deletion still follows successful owned-media removal.
 - Failed or budget-deferred runs return HTTP 503. Aggregate `maintenance_finished` logs contain counts and duration, without user identifiers, storage paths, or tokens. Counts describe this bounded run, not proof that the entire queue is empty.
 
 ## Verification and operations
 
-111 unit assertions passed, including limits, exhausted budgets, unknown buckets, batching, and exceptions. Type checking, lint, production build, and six desktop/mobile publishing/discovery scenarios passed. The browser workflow checks eager/high-priority loading of the first cover.
+118 unit assertions passed across the full suite and the additional cover fast-path assertion, including limits, exhausted budgets, unknown buckets, batching, exceptions, real thumbnail resizing, metadata stripping, and visibility revalidation. Type checking, lint, production build, and six desktop/mobile publishing/discovery scenarios passed, with both publishing workflows rerun after responsive-image delivery. The workflow checks eager/high-priority loading, responsive sources, and actual decoding of the first cover.
+
+The first deployed region/priority changes reduced Explore LCP to 3.4 and 3.3 seconds in two runs. Performance scores were 84 and 88 because blocking time varied to 270 and 240 ms; this is not evidence of a uniformly improved overall score. Responsive thumbnail delivery is measured separately after its deployment.
 
 The production cron is enabled for 03:00 UTC (08:30 Asia/Calcutta). Aggregate-only queue inspection found two pending media jobs, one eligible at inspection. Earliest eligibility was 13 October at 12:14 UTC (17:44 Asia/Calcutta), after that day's schedule, explaining the absence of completion. No real cleanup or account deletion was manually invoked.
 

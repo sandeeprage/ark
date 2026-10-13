@@ -10,7 +10,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       status: 404,
       headers: { "Cache-Control": "private, no-store" },
     });
-  return NextResponse.redirect(cover.url, {
+  return NextResponse.redirect(new URL(`${cover.url}?w=1280`, _request.url), {
     status: 302,
     headers: { "Cache-Control": "private, no-store" },
   });

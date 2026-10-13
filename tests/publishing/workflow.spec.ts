@@ -95,6 +95,18 @@ test("maker publishes validated images, edits, pins, and deletes", async ({
   await page.goto("/explore");
   await expect(page.locator(".project-cover img").first()).toHaveAttribute("loading", "eager");
   await expect(page.locator(".project-cover img").first()).toHaveAttribute("fetchpriority", "high");
+  await expect(page.locator(".project-cover img").first()).toHaveAttribute(
+    "srcset",
+    /thumbnail\?w=/,
+  );
+  await expect
+    .poll(() =>
+      page
+        .locator(".project-cover img")
+        .first()
+        .evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0),
+    )
+    .toBe(true);
   await page.goto("/projects/10000000-0000-4000-a000-000000000001");
   await page.getByRole("button", { name: "Pin on profile" }).click();
   await expect(page.getByRole("button", { name: "Unpin", exact: true })).toBeVisible();

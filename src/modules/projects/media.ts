@@ -26,6 +26,17 @@ export async function getVisibleMedia(
   });
   if (error || !data?.length) return [];
   const rows = data as MediaRow[];
+  if (coversOnly)
+    return rows.map((row) => ({
+      id: row.id,
+      project_id: row.project_id,
+      alt_text: row.alt_text,
+      width: row.width,
+      height: row.height,
+      position: row.position,
+      is_cover: row.is_cover,
+      url: `/api/projects/${row.project_id}/thumbnail`,
+    }));
   const { data: urls, error: signError } = await admin.storage.from("ark-media").createSignedUrls(
     rows.map((row) => row.object_key),
     300,

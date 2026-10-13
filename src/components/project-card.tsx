@@ -1,5 +1,5 @@
 import Link from "./intent-link";
-import Image from "next/image";
+import { ProjectCoverImage } from "./project-cover-image";
 import { ArrowUpRight, Box } from "lucide-react";
 import { UpvoteButton } from "./upvote-button";
 import type { ProjectSummary } from "@/modules/discovery/queries";
@@ -20,14 +20,13 @@ export function ProjectCard({
     <article className={compact ? "project-row" : "project-card"}>
       <Link className="project-cover" href={href} aria-label={`View ${project.name}`}>
         {project.cover ? (
-          <Image
+          <ProjectCoverImage
             src={project.cover.url}
             alt={project.cover.alt_text}
             width={project.cover.width}
             height={project.cover.height}
-            unoptimized
-            loading={eager ? "eager" : "lazy"}
-            fetchPriority={eager ? "high" : "auto"}
+            eager={eager}
+            compact={compact}
           />
         ) : (
           <>
