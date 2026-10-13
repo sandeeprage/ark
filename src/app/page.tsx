@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight, ArrowUpRight, Compass, Layers3, Send, Users } from "lucide-react";
 import { SiteFooter } from "@/components/site-footer";
 import { getViewer } from "@/modules/auth/session";
+import { SiteNavigation } from "@/components/site-navigation";
 
 export const metadata: Metadata = {
   title: { absolute: "ARK — A home for shipped work" },
@@ -39,11 +40,12 @@ export default async function Home() {
               ARK<span className="landing-brand-dot">.</span>
             </span>
           </Link>
-          <nav className="landing-nav" aria-label="Landing navigation">
-            <Link href="/explore">Explore</Link>
-            <Link href="/search">Search</Link>
-            <Link href={accountHref}>{accountLabel}</Link>
-          </nav>
+          <div className="landing-nav">
+            <SiteNavigation />
+            <nav aria-label="Landing navigation">
+              <Link href={accountHref}>{accountLabel}</Link>
+            </nav>
+          </div>
           <Link href="/publish" className="landing-header-action">
             Share your work <ArrowUpRight size={16} aria-hidden="true" />
           </Link>
@@ -129,7 +131,6 @@ export default async function Home() {
               </article>
             </div>
           </section>
-
         </main>
         <SiteFooter />
       </div>

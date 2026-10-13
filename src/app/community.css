@@ -1,0 +1,215 @@
+.site-navigation {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.site-navigation a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--muted);
+}
+.site-navigation a:hover,
+.site-navigation a[aria-current="page"] {
+  color: var(--text);
+}
+.site-navigation a[aria-current="page"] {
+  text-decoration: underline;
+  text-underline-offset: 8px;
+}
+.app-navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 72px;
+  width: calc(100% - 96px);
+  max-width: 1224px;
+  margin-inline: auto;
+  border-bottom: 1px solid var(--border);
+}
+.app-main > .site-footer {
+  width: calc(100% - 96px);
+  max-width: 1224px;
+  margin-inline: auto;
+}
+.explore-page {
+  max-width: 1320px;
+  padding-top: 40px;
+}
+.explore-page .page-heading {
+  margin-bottom: 32px;
+}
+.explore-page h1 {
+  font-size: clamp(32px, 3.2vw, 44px);
+  line-height: 1.15;
+}
+.explore-layout {
+  grid-template-columns: minmax(0, 1fr) 240px;
+  gap: 40px;
+}
+.explore-page .project-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.discovery-publish {
+  width: 100%;
+  margin-bottom: 24px;
+}
+.directory-page,
+.about-page {
+  max-width: 1320px;
+}
+.maker-search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 32px 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 8px 8px 16px;
+}
+.maker-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  padding: 8px 0;
+  color: var(--text);
+}
+.makers-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+.maker-directory-card {
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  transition:
+    background 150ms ease,
+    border-color 150ms ease;
+}
+.maker-directory-card:hover {
+  background: var(--surface);
+  border-color: var(--strong-border);
+}
+.maker-directory-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.maker-directory-top .avatar {
+  width: 44px;
+  height: 44px;
+}
+.maker-directory-card h2 {
+  font-size: 17px;
+  overflow-wrap: anywhere;
+}
+.maker-directory-card .username {
+  font-size: 12px;
+  color: var(--muted);
+}
+.maker-directory-card p {
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.about-page h1 {
+  font-size: clamp(36px, 4vw, 56px);
+  line-height: 1.1;
+}
+.about-intro {
+  max-width: 680px;
+  font-size: 17px;
+  line-height: 1.8;
+  color: var(--muted);
+  margin-top: 26px;
+}
+.about-principles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 28px;
+  margin-top: 56px;
+  padding-top: 32px;
+  border-top: 1px solid var(--border);
+}
+.about-principles h2 {
+  font-size: 18px;
+  margin: 22px 0 12px;
+}
+.about-principles p {
+  color: var(--muted);
+  line-height: 1.8;
+  font-size: 13px;
+}
+.about-invitation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-top: 48px;
+  padding: 28px;
+}
+.about-invitation h2 {
+  font-size: 22px;
+}
+@media (max-width: 1279px) {
+  .app-navbar {
+    width: calc(100% - 64px);
+  }
+  .app-main > .site-footer {
+    width: calc(100% - 64px);
+  }
+  .explore-layout {
+    grid-template-columns: minmax(0, 1fr) 220px;
+    gap: 28px;
+  }
+  .makers-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 1023px) {
+  .explore-layout {
+    grid-template-columns: 1fr;
+  }
+  .about-principles {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+}
+@media (max-width: 767px) {
+  .app-navbar {
+    width: calc(100% - 40px);
+    min-height: 60px;
+  }
+  .app-main > .site-footer {
+    width: calc(100% - 40px);
+  }
+  .site-navigation {
+    gap: 22px;
+    font-size: 12px;
+  }
+  .explore-page {
+    padding-top: 28px;
+  }
+  .explore-page .project-grid,
+  .makers-grid {
+    grid-template-columns: 1fr;
+  }
+  .about-intro {
+    font-size: 15px;
+  }
+  .about-invitation {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 24px;
+  }
+}

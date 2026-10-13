@@ -697,7 +697,7 @@ main {
   font-size: 9px;
 }
 .discovery-aside {
-  margin-top: -28px;
+  margin-top: 0;
 }
 .community-note {
   background: var(--surface);
@@ -775,15 +775,15 @@ main {
 }
 .site-footer {
   border-top: 1px solid var(--border);
-  margin: 32px 48px 0;
-  padding: 36px 0 22px;
+  margin: 40px 48px 0;
+  padding: 28px 0 20px;
 }
 .site-footer-content {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 48px;
-  padding-bottom: 42px;
+  align-items: center;
+  gap: 24px;
+  padding-bottom: 24px;
 }
 .site-footer-about {
   max-width: 290px;
@@ -792,7 +792,7 @@ main {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 800;
   letter-spacing: -1.5px;
   line-height: 1;
@@ -801,7 +801,7 @@ main {
   color: var(--muted);
 }
 .site-footer-about p {
-  margin: 17px 0 0;
+  margin: 9px 0 0;
   max-width: 290px;
   font-size: 12px;
   line-height: 1.7;
@@ -809,22 +809,8 @@ main {
 }
 .site-footer-nav {
   display: flex;
-  gap: clamp(48px, 7vw, 120px);
-  padding-right: 24px;
-}
-.site-footer-nav > div {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 13px;
-}
-.site-footer-heading {
-  margin-bottom: 5px;
-  font-family: monospace;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1.2px;
-  color: var(--muted);
+  flex-wrap: wrap;
+  gap: 12px 26px;
 }
 .site-footer-nav a {
   display: inline-flex;
@@ -844,9 +830,7 @@ main {
   gap: 20px;
   border-top: 1px solid var(--border);
   padding-top: 18px;
-  font-family: monospace;
-  font-size: 10px;
-  letter-spacing: 0.3px;
+  font-size: 11px;
   color: var(--muted);
 }
 .project-grid {
@@ -1484,13 +1468,14 @@ main {
   }
   .site-footer-content {
     flex-direction: column;
-    gap: 34px;
-    padding-bottom: 32px;
+    align-items: flex-start;
+    gap: 24px;
+    padding-bottom: 24px;
   }
   .site-footer-nav {
     width: 100%;
-    justify-content: space-between;
-    gap: 20px;
+    justify-content: flex-start;
+    gap: 12px 24px;
     padding-right: 0;
   }
   .site-footer-bottom {

@@ -1,17 +1,9 @@
 import Link from "./intent-link";
-import {
-  ArrowUpRight,
-  Bell,
-  Bookmark,
-  Github,
-  Layers3,
-  Plus,
-  Search,
-  Users,
-} from "lucide-react";
+import { ArrowUpRight, Bell, Bookmark, Github, Layers3, Plus, Search, Users } from "lucide-react";
 import { getViewer } from "@/modules/auth/session";
 import { SidebarNav, MobileNavigation } from "./navigation";
 import { SiteFooter } from "./site-footer";
+import { SiteNavigation } from "./site-navigation";
 
 export async function AppShell({ children }: { children: React.ReactNode }) {
   const viewer = await getViewer();
@@ -80,6 +72,12 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
         <MobileNavigation>{sidebar}</MobileNavigation>
       </header>
       <div className="app-main">
+        <header className="app-navbar">
+          <SiteNavigation />
+          <Link href="/search" className="icon-button" aria-label="Search projects and makers">
+            <Search size={18} />
+          </Link>
+        </header>
         <main id="main-content" tabIndex={-1}>
           {children}
         </main>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, Layers3 } from "lucide-react";
+import { Layers3 } from "lucide-react";
 
 export function SiteFooter() {
   return (
@@ -12,24 +12,18 @@ export function SiteFooter() {
               ARK<span className="site-footer-dot">.</span>
             </span>
           </Link>
-          <p>A home for the projects you shipped and the people who made them.</p>
+          <p>A home for shipped work.</p>
         </div>
         <nav className="site-footer-nav" aria-label="Footer navigation">
-          <div>
-            <span className="site-footer-heading">EXPLORE</span>
-            <Link href="/explore">Discover projects</Link>
-            <Link href="/search">Search</Link>
-          </div>
-          <div>
-            <span className="site-footer-heading">MAKE</span>
-            <Link href="/publish">Share your work <ArrowUpRight size={14} aria-hidden="true" /></Link>
-            <Link href="/following">Following</Link>
-          </div>
+          <Link href="/explore">Discover projects</Link>
+          <Link href="/makers">Makers</Link>
+          <Link href="/about">About us</Link>
+          <Link href="/publish">Share your work</Link>
         </nav>
       </div>
       <div className="site-footer-bottom">
-        <span>ARK — built for people who build.</span>
-        <span>Built. Shipped. Shared.</span>
+        <span>© ARK. Built for people who build.</span>
+        <Link href="/makers">Meet the community ↗</Link>
       </div>
     </footer>
   );

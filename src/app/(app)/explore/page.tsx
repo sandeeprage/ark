@@ -13,25 +13,22 @@ export default async function Explore({ searchParams }: { searchParams: Promise<
   const filtered = Boolean(filters.category || filters.stack.length || filters.query);
   return (
     <div className="page explore-page">
-      <div className="page-heading">
-        <div>
-          <p className="eyebrow">THE DEVELOPER LAUNCHPAD</p>
-          <h1>
-            Good work deserves
-            <br className="desktop-break" /> to be discovered<span className="muted-period">.</span>
-          </h1>
-          <p className="page-description">
-            Explore what developers are shipping.
-            <br className="mobile-break" /> Find your next favorite project.
-          </p>
-        </div>
-        <Link href="/publish" className="button button-outline heading-action">
-          <Plus size={17} />
-          Share your work
-        </Link>
-      </div>
       <div className="explore-layout">
         <div className="feed-column">
+          <div className="page-heading">
+            <div>
+              <p className="eyebrow">THE DEVELOPER LAUNCHPAD</p>
+              <h1>
+                Good work deserves
+                <br className="desktop-break" /> to be discovered
+                <span className="muted-period">.</span>
+              </h1>
+              <p className="page-description">
+                Explore what developers are shipping.
+                <br className="mobile-break" /> Find your next favorite project.
+              </p>
+            </div>
+          </div>
           <div className="feed-tabs">
             <nav aria-label="Project feed">
               <Link
@@ -123,6 +120,9 @@ export default async function Explore({ searchParams }: { searchParams: Promise<
           </div>
         </div>
         <aside className="discovery-aside">
+          <Link href="/publish" className="button button-primary discovery-publish">
+            <Plus size={17} /> Share your work
+          </Link>
           <section className="community-note">
             <span className="small-icon">
               <Sparkles size={19} strokeWidth={1.3} />
@@ -134,7 +134,7 @@ export default async function Explore({ searchParams }: { searchParams: Promise<
               More making.
             </h2>
             <p>A home for the projects you actually finished. No hype required.</p>
-            <Link href="/login" className="text-link">
+            <Link href="/makers" className="text-link">
               Meet your next community
               <ArrowUpRight size={14} />
             </Link>
