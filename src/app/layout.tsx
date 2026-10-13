@@ -4,6 +4,7 @@ import "./globals.css";
 import "./publishing.css";
 import "./discovery.css";
 import "./social.css";
+import "./landing.css";
 
 export const metadata: Metadata = {
   title: { default: "ARK — A home for shipped work", template: "%s · ARK" },

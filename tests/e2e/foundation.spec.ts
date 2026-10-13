@@ -2,10 +2,15 @@ import { test, expect } from "@playwright/test";
 
 test("visitor can browse, filter, and navigate without overflow", async ({ page }) => {
   await page.goto("/");
-  await expect(page).toHaveURL(/\/explore$/);
+  await expect(page).toHaveURL(/\/$/);
   await expect(
     page.getByRole("heading", { name: "Good work deserves to be discovered." }),
   ).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
+  await page.getByRole("link", { name: "Explore projects" }).click();
+  await expect(page).toHaveURL(/\/explore$/);
   await page.getByRole("link", { name: "Latest", exact: true }).click();
   await expect(page).toHaveURL(/tab=latest/);
   await page.getByLabel("Category", { exact: true }).selectOption("developer-tools");
