@@ -47,13 +47,12 @@ export async function collectionProjects(id: string, after: { added: string; id:
   if (error) throw new Error("Collection projects couldn’t be loaded.");
   const rows = (data ?? []) as (ProjectSummary & { added_at: string })[];
   const projects = rows.slice(0, 20);
-  const [covers, votes, saved] = await Promise.all([
+  const [covers, votes] = await Promise.all([
     getVisibleMedia(
       projects.map((p) => p.id),
       true,
     ),
     getVoteStates(projects),
-    getSavedStates(projects),
   ]);
   return {
     projects: projects.map((p) => ({
@@ -61,7 +60,6 @@ export async function collectionProjects(id: string, after: { added: string; id:
       upvote_count: Number(p.upvote_count),
       cover: covers.find((i) => i.project_id === p.id),
       ...votes.find((v) => v.id === p.id),
-      viewer_saved: saved.includes(p.id),
     })),
     next: rows.length > 20 ? { added: rows[19].added_at, id: rows[19].id } : null,
   };

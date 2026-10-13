@@ -44,7 +44,9 @@ test("public saving, multiple memberships, CRUD and error recovery", async ({
   const card = page
     .locator("article")
     .filter({ has: page.getByRole("heading", { name: "Discovery project 01", exact: true }) });
-  await card.getByRole("button", { name: "Save project", exact: true }).click();
+  await expect(card.getByRole("button", { name: "Save project", exact: true })).toHaveCount(0);
+  await card.getByRole("link", { name: "View Discovery project 01", exact: true }).click();
+  await page.getByRole("button", { name: "Save project", exact: true }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog).toContainText("Public collection — anyone can view this.");
   await dialog.getByRole("checkbox", { name: /Saved/ }).check();
@@ -60,7 +62,7 @@ test("public saving, multiple memberships, CRUD and error recovery", async ({
   await expect(dialog.getByRole("checkbox", { name: "Tools", exact: true })).toBeChecked();
   await dialog.getByRole("button", { name: "Close collections", exact: true }).click();
   await expect(
-    card.getByRole("button", { name: "Manage saved project", exact: true }),
+    page.getByRole("button", { name: "Manage saved project", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
   await page.goto("/collections");
   const editor = page

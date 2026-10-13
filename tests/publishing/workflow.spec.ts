@@ -84,9 +84,10 @@ test("maker publishes validated images, edits, pins, and deletes", async ({
   await page.getByRole("button", { name: "Publish project", exact: true }).click();
   await expect(page).toHaveURL(/\/projects\/10000000-0000-4000-a000-000000000001$/);
   await expect(page.getByRole("heading", { name: "Fixture toolkit", exact: true })).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Upvote · 0 upvotes", exact: true }),
-  ).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Upvote · 0 upvotes", exact: true })).toHaveCount(
+    0,
+  );
+  await expect(page.locator(".upvote-total")).toHaveText("0 upvotes");
   const state = await (await request.get("http://127.0.0.1:55431/__state")).json();
   expect(state.processedImages).toHaveLength(2);
   expect(state.media[0].alt_text).toBe("A second toolkit screen");

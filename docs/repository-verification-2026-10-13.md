@@ -11,3 +11,7 @@ Verification expires after 90 days. Public reads expose only state and dates and
 Verification: 93 unit tests; 172 database checks including 25 new ownership, role, expiry, invalidation, replay, and rate-limit assertions; 18 auth/publishing desktop/mobile regression checks; four new desktop/mobile verification checks. Type checking, lint, and a production build passed. Provider and route tests use isolated mocks; database and browser fixtures stay outside the managed project. GitHub CI builds from all eleven migrations and runs the regression suites.
 
 Remaining work in milestone 5: reporting, admin review, hide/restore and suspend/unsuspend controls, durable moderation audit, and managed moderation smoke tests. Explicit GitHub linking/disconnection controls remain part of identity work; this check uses identities already linked by Auth.
+
+The managed database's normalized function bodies, execution grants, RLS, identity cascade, and invalidation trigger matched the tested migration. The real Momentstamp repository passed the deployed ownership check as @sndp on 13 October 2026.
+
+The requested follow-up removes the upvote button on a maker's own projects and keeps a plain total. Save is removed from all project cards; the project-detail Save picker still manages collections. Feed, pinned-project, and collection-card queries no longer request unused saved states. Ten relevant desktop/mobile voting, saving, publishing, and notification checks passed, as did type checking, lint, and a production build.

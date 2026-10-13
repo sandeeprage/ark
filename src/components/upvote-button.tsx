@@ -26,6 +26,12 @@ export function UpvoteButton({
     if (!busy.current) setState({ count, upvoted });
   }, [count, upvoted]);
   const className = compact ? "vote-count upvote-button" : "button button-outline upvote-button";
+  if (access === "owner")
+    return (
+      <span className="upvote-total">
+        {state.count} {state.count === 1 ? "upvote" : "upvotes"}
+      </span>
+    );
   if (access === "anonymous")
     return (
       <Link
@@ -47,11 +53,9 @@ export function UpvoteButton({
         aria-label={`${state.upvoted ? "Remove upvote" : "Upvote"} · ${state.count} upvotes`}
         disabled={pending || access !== "active"}
         title={
-          access === "owner"
-            ? "You can’t upvote your own project"
-            : access === "restricted"
-              ? "Complete onboarding with an active account to upvote"
-              : undefined
+          access === "restricted"
+            ? "Complete onboarding with an active account to upvote"
+            : undefined
         }
         onClick={() => {
           if (busy.current) return;

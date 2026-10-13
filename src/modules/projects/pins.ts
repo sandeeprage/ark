@@ -3,16 +3,14 @@ import { createClient } from "@/lib/supabase/server";
 import { getVisibleMedia } from "./media";
 import type { ProjectSummary } from "@/modules/discovery/queries";
 import { getVoteStates } from "@/modules/discovery/votes";
-import { getSavedStates } from "@/modules/collections/queries";
 
 export async function getPinnedProjects(makerId: string): Promise<ProjectSummary[]> {
   const client = await createClient();
   const { data, error } = await client.rpc("get_pinned_projects", { p_maker: makerId });
   if (error) return [];
   const projects = (data ?? []) as ProjectSummary[];
-  const [votes, saved, covers] = await Promise.all([
+  const [votes, covers] = await Promise.all([
     getVoteStates(projects),
-    getSavedStates(projects),
     getVisibleMedia(
       projects.map((project) => project.id),
       true,
@@ -23,6 +21,5 @@ export async function getPinnedProjects(makerId: string): Promise<ProjectSummary
     upvote_count: Number(project.upvote_count),
     cover: covers.find((cover) => cover.project_id === project.id),
     ...votes.find((vote) => vote.id === project.id),
-    viewer_saved: saved.includes(project.id),
   }));
 }

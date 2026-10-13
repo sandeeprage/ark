@@ -50,3 +50,8 @@
   color: var(--muted);
   margin: 18px 0;
 }
+.upvote-total {
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}

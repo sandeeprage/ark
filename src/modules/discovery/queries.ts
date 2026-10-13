@@ -6,7 +6,6 @@ import { filterScope, type FeedFilters } from "./filters";
 import type { Profile } from "@/modules/auth/session";
 import { getVisibleMedia, type SignedMedia } from "@/modules/projects/media";
 import { getVoteStates, type VoteAccess } from "./votes";
-import { getSavedStates } from "@/modules/collections/queries";
 
 export type ProjectSummary = {
   id: string;
@@ -26,7 +25,6 @@ export type ProjectSummary = {
   upvote_count: number;
   cover?: SignedMedia;
   viewer_upvoted?: boolean;
-  viewer_saved?: boolean;
   vote_access?: VoteAccess;
 };
 export type CatalogItem = { id: string; slug: string; name: string };
@@ -106,13 +104,12 @@ export async function listProjects(filters: FeedFilters, maker?: string) {
     .slice(0, 20)
     .map((row) => ({ ...row, upvote_count: Number(row.upvote_count) }));
   const last = projects[projects.length - 1];
-  const [covers, votes, saved] = await Promise.all([
+  const [covers, votes] = await Promise.all([
     getVisibleMedia(
       projects.map((project) => project.id),
       true,
     ),
     getVoteStates(projects),
-    getSavedStates(projects),
   ]);
   const nextCursor =
     rows.length > 20 && last
@@ -128,7 +125,6 @@ export async function listProjects(filters: FeedFilters, maker?: string) {
       ...project,
       cover: covers.find((image) => image.project_id === project.id),
       ...votes.find((vote) => vote.id === project.id),
-      viewer_saved: saved.includes(project.id),
     })),
     nextCursor,
     state: "ready" as const,
