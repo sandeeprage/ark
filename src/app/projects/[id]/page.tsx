@@ -12,6 +12,8 @@ import { ProjectGallery } from "@/components/project-gallery";
 import { ProjectManagement } from "@/components/project-management";
 import { SaveButton } from "@/components/save-button";
 import { getSavedStates } from "@/modules/collections/queries";
+import { getRepositoryVerification } from "@/modules/projects/verification";
+import { RepositoryVerification } from "@/components/repository-verification";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const project = await getPublicProject((await params).id);
@@ -35,7 +37,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 export default async function Project({ params }: { params: Promise<{ id: string }> }) {
   const project = await getPublicProject((await params).id);
   if (!project) notFound();
-  const [images, [vote], saved, management] = await Promise.all([
+  const [images, [vote], saved, management, verification, viewer] = await Promise.all([
     getProjectMedia(project.id),
     getVoteStates([project]),
     getSavedStates([project]),
@@ -44,6 +46,8 @@ export default async function Project({ params }: { params: Promise<{ id: string
         ? getMyProject(project.id)
         : null,
     ),
+    project.github_url ? getRepositoryVerification(project.id) : Promise.resolve(null),
+    getViewer(),
   ]);
   const url = `${process.env.NEXT_PUBLIC_SITE_URL || "http://127.0.0.1:3000"}/projects/${project.id}`;
   return (
@@ -113,6 +117,14 @@ export default async function Project({ params }: { params: Promise<{ id: string
         </div>
         {management && (
           <ProjectManagement id={project.id} name={project.name} pinned={management.pinned} />
+        )}
+        {project.github_url && (
+          <RepositoryVerification
+            id={project.id}
+            verification={verification}
+            owner={Boolean(management)}
+            connected={Boolean(viewer?.profile?.github_connected_at)}
+          />
         )}
       </div>
       <ProjectGallery images={images} />

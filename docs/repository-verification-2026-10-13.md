@@ -1,0 +1,13 @@
+# Repository ownership — 13 October 2026
+
+Repository verification is optional and is requested by the owner on the public project page. It checks a public GitHub repository's stable personal owner ID against an authenticated GitHub identity in Supabase Auth. Organization repositories, another user's repositories, private repositories, unavailable repositories, and mismatched API metadata do not receive a verified claim. Forks are eligible; the dated indicator and its keyboard-accessible explanation explicitly exclude authorship, originality, and quality claims.
+
+The server requests only `https://api.github.com/repos/{owner}/{repo}`, without provider tokens or repository access scopes. Redirects are not followed; a renamed repository requires updating the saved link before checking again. GitHub timeouts, rate limits, and other failures leave the project published and unverified, with a retry message.
+
+Migration `202610130011_repository_verification.sql` adds private evidence and an authorized attempt/attestation workflow. The session-scoped begin function derives the maker from `auth.uid()`, checks active/onboarded eligibility and project ownership, limits checks to ten per maker per hour, clears the previous claim, and issues a 30-second attempt. Only the server role can complete an attempt using the GitHub API result. Completion checks the same repository link, project version, GitHub identity, and account state again. Overlapping attempts cannot commit an older response; completed attempts cannot replay.
+
+Verification expires after 90 days. Public reads expose only state and dates and require current project visibility plus the same linked GitHub identity. Changing repository links, hiding/deleting a project, and deleting the linked identity invalidate or remove evidence. Reconnecting the same identity does not revive old evidence. The owner can recheck expired verification; public visitors cannot trigger checks or read private evidence.
+
+Verification: 93 unit tests; 172 database checks including 25 new ownership, role, expiry, invalidation, replay, and rate-limit assertions; 18 auth/publishing desktop/mobile regression checks; four new desktop/mobile verification checks. Type checking, lint, and a production build passed. Provider and route tests use isolated mocks; database and browser fixtures stay outside the managed project. GitHub CI builds from all eleven migrations and runs the regression suites.
+
+Remaining work in milestone 5: reporting, admin review, hide/restore and suspend/unsuspend controls, durable moderation audit, and managed moderation smoke tests. Explicit GitHub linking/disconnection controls remain part of identity work; this check uses identities already linked by Auth.

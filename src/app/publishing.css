@@ -352,3 +352,20 @@
     overflow-wrap: anywhere;
   }
 }
+.repository-verification {
+  margin-top: 24px;
+  max-width: 680px;
+}
+.repository-verification details {
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+.repository-verification summary {
+  cursor: pointer;
+}
+.repository-verified {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-weight: 600;
+}

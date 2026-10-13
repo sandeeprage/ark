@@ -34,6 +34,7 @@ let preferences = { follows: true, upvotes: true, launches: true };
 let failSave = false;
 let googleEnabled = false;
 let profileOverride = null;
+let repositoryVerification = null;
 function authSession() {
   const expires = Math.floor(Date.now() / 1000) + 3600;
   const jwt = [
@@ -89,6 +90,7 @@ const server = http.createServer(async (request, response) => {
   try {
     if (path === "/__health") return json({ ready: true });
     if (path === "/__reset") {
+      repositoryVerification = null;
       googleEnabled = false;
       profileOverride = null;
       user.app_metadata.provider = "github";
@@ -113,6 +115,31 @@ const server = http.createServer(async (request, response) => {
     }
     if (path === "/__auth_mode") {
       authMode = body().mode;
+      return json({ ready: true });
+    }
+    if (path === "/__repository_project") {
+      const state = body().state;
+      project = {
+        id: projectId,
+        maker_id: owner,
+        name: "Repository fixture",
+        tagline: "A public repository ownership fixture",
+        description: "A disposable ownership browser fixture. ".repeat(5),
+        status: "published",
+        version: 1,
+        github_url: "https://github.com/fixture_maker/work",
+        category_id: categoryId,
+        published_at: new Date().toISOString(),
+      };
+      repositoryVerification = state
+        ? {
+            state,
+            checked_at: new Date(Date.now() - 86400000).toISOString(),
+            expires_at: new Date(
+              Date.now() + (state === "expired" ? -1 : 89) * 86400000,
+            ).toISOString(),
+          }
+        : null;
       return json({ ready: true });
     }
     if (path === "/__google_mode") {
@@ -238,6 +265,7 @@ const server = http.createServer(async (request, response) => {
         input = body();
       if (name === "my_account_status")
         return json(authMode === "suspended" ? "suspended" : "active");
+      if (name === "get_public_repository_verification") return json(repositoryVerification);
       if (name === "sync_my_github_identity") return json(null);
       if (name === "update_my_profile") {
         profileOverride = {
