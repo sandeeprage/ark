@@ -66,6 +66,8 @@ test("new maker callback preserves the destination through onboarding", async ({
   await page.goto("/login?next=%2Fsettings");
   await page.getByRole("button", { name: "Continue with GitHub", exact: true }).click();
   await expect(page).toHaveURL(/\/onboarding\?next=%2Fsettings$/);
+  await expect(page.locator(".topbar")).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Let’s meet the maker." })).toBeVisible();
   await expect(page.locator('input[name="next"]')).toHaveValue("/settings");
 });
 test("restricted account reaches its notice and can sign out locally", async ({
