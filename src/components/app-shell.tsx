@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { getViewer } from "@/modules/auth/session";
 import { SidebarNav, MobileNavigation } from "./navigation";
+import { SiteFooter } from "./site-footer";
 
 export async function AppShell({ children }: { children: React.ReactNode }) {
   const viewer = await getViewer();
@@ -92,10 +93,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
         <main id="main-content" tabIndex={-1}>
           {children}
         </main>
-        <footer className="page-footer">
-          <span>ARK — built for people who build.</span>
-          <span>Ship something. Put it out there.</span>
-        </footer>
+        <SiteFooter />
       </div>
     </div>
   );

@@ -6,12 +6,22 @@ test("visitor can browse, filter, and navigate without overflow", async ({ page 
   await expect(
     page.getByRole("heading", { name: "Good work deserves to be discovered." }),
   ).toBeVisible();
+  const landingFooter = page.getByRole("contentinfo");
+  await expect(landingFooter.getByRole("navigation", { name: "Footer navigation" })).toBeVisible();
+  await expect(landingFooter.getByRole("link", { name: "Discover projects" })).toHaveAttribute(
+    "href",
+    "/explore",
+  );
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   );
   await page.getByRole("link", { name: "Explore projects" }).click();
   await expect(page).toHaveURL(/\/explore$/);
   await expect(page.locator(".topbar")).toHaveCount(0);
+  await expect(page.getByRole("contentinfo").getByRole("link", { name: "Share your work" })).toHaveAttribute(
+    "href",
+    "/publish",
+  );
   await page.getByRole("link", { name: "Latest", exact: true }).click();
   await expect(page).toHaveURL(/tab=latest/);
   await page.getByLabel("Category", { exact: true }).selectOption("developer-tools");
@@ -23,7 +33,7 @@ test("visitor can browse, filter, and navigate without overflow", async ({ page 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   );
-  await page.getByRole("link", { name: "ARK home" }).click();
+  await page.getByRole("contentinfo").getByRole("link", { name: "ARK home" }).click();
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole("heading", { name: "Good work deserves to be discovered." })).toBeVisible();
   await expect(page.locator(".sidebar")).toHaveCount(0);

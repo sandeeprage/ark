@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight, Compass, Layers3, Send, Users } from "lucide-react";
+import { SiteFooter } from "@/components/site-footer";
 
 export const metadata: Metadata = {
   title: { absolute: "ARK — A home for shipped work" },
@@ -113,13 +114,8 @@ export default function Home() {
             </div>
           </section>
 
-          <div className="landing-bottom">
-            <span>ARK — BUILT FOR PEOPLE WHO BUILD.</span>
-            <Link href="/explore">
-              Start exploring <ArrowUpRight size={15} aria-hidden="true" />
-            </Link>
-          </div>
         </main>
+        <SiteFooter />
       </div>
     </>
   );
