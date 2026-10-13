@@ -47,6 +47,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - run: npm ci
       - run: node tests/database/upvotes-concurrency.mjs
       - run: node tests/database/following-concurrency.mjs
       - run: node tests/database/collections-concurrency.mjs
+      - run: node scripts/verify-database-restore.mjs
+        env:
+          ARK_RESTORE_TEST: "1"
+          ARK_RESTORE_CONTAINER: ${{ job.services.postgres.id }}

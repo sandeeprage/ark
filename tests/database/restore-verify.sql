@@ -1,0 +1,47 @@
+-- Run only against the disposable database created by verify-database-restore.mjs.
+begin;
+create function pg_temp.assert_true(condition boolean,label text) returns void language plpgsql as $$
+begin if condition is not true then raise exception 'FAIL: %',label;end if;raise notice 'PASS: %',label;end;$$;
+create function pg_temp.expect_error(statement text,code text,label text) returns void language plpgsql as $$
+declare failed boolean:=false;begin begin execute statement;exception when others then if sqlstate<>code then raise exception 'FAIL: % expected %, got %',label,code,sqlstate;end if;failed:=true;end;if not failed then raise exception 'FAIL: % unexpectedly succeeded',label;end if;raise notice 'PASS: %',label;end;$$;
+select pg_temp.assert_true((select count(*)=3 from auth.users),'Auth fixture users restored');
+select pg_temp.assert_true((select count(*)=2 from auth.identities),'provider identity associations restored');
+select pg_temp.assert_true((select count(*)=2 from public.projects),'public and hidden projects restored');
+select pg_temp.assert_true((select count(*)=2 from public.project_media),'private media references restored');
+select pg_temp.assert_true((select count(*)=1 from public.profile_pins),'pin relationship restored');
+select pg_temp.assert_true((select count(*)=1 from public.collection_items),'collection membership restored');
+select pg_temp.assert_true((select count(*)=1 from public.upvotes),'vote relationship restored');
+select pg_temp.assert_true((select count(*)=1 from public.follows),'follow relationship restored');
+select pg_temp.assert_true((select count(*)>=1 from public.notifications),'notification history restored');
+select pg_temp.assert_true((select count(*)=1 from private.moderation_audit),'moderation audit restored');
+select pg_temp.assert_true((select payload->>'user_id'='22222222-2222-4222-a222-222222222222' and jsonb_array_length(payload->'objects')=1 from private.maintenance_jobs where id='cccccccc-cccc-4ccc-accc-cccccccccccc'),'durable erasure snapshot restored');
+set local role anon;
+select pg_temp.assert_true((select count(*)=1 from public.list_projects()),'public feed still excludes hidden and deleting makers');
+select pg_temp.assert_true((select has_avatar=true from public.get_public_profile_details('restore_alice')),'public avatar presence restored');
+select pg_temp.assert_true((select count(*)=0 from public.get_public_profile_details('restore_bob')),'deleting maker stays invisible');
+select pg_temp.expect_error('select * from public.upvotes','42501','raw voter identities remain private');
+select pg_temp.expect_error('select * from public.project_media','42501','raw media paths remain private');
+select pg_temp.expect_error('select * from private.content_reports','42501','reports remain private');
+select pg_temp.expect_error('select * from private.moderation_audit','42501','audit remains private');
+select pg_temp.expect_error('select public.get_visible_project_media(''{}'')','42501','media path RPC remains service-only');
+reset role;
+select set_config('request.jwt.claim.sub','11111111-1111-4111-a111-111111111111',true);
+set local role authenticated;
+select pg_temp.assert_true(public.my_admin_access()=false,'ordinary maker is not administrator');
+select pg_temp.expect_error('select public.list_content_reports()','42501','ordinary maker cannot read moderation reports');
+select pg_temp.expect_error('insert into private.user_roles(user_id,role) values(auth.uid(),''admin'')','42501','ordinary maker cannot elevate role');
+select pg_temp.expect_error('select public.claim_account_erasure_jobs()','42501','ordinary maker cannot run erasure worker');
+select pg_temp.assert_true((select count(*)=0 from public.notifications where recipient_id<>'11111111-1111-4111-a111-111111111111'),'notification recipient isolation survives restore');
+select pg_temp.assert_true(jsonb_array_length(public.get_my_report_statuses())=0,'other reporter status stays private');
+reset role;
+select set_config('request.jwt.claim.sub','33333333-3333-4333-a333-333333333333',true);
+set local role authenticated;
+select pg_temp.assert_true(public.my_admin_access()=true,'explicit administrator grant survives restore');
+select pg_temp.assert_true(jsonb_array_length(public.list_content_reports())=1,'administrator can read restored report');
+select pg_temp.assert_true(jsonb_array_length(public.list_moderation_audit())=1,'administrator can read restored audit');
+reset role;
+set local role service_role;
+select pg_temp.assert_true((select count(*)=1 from public.get_visible_project_media(array['44444444-4444-4444-a444-444444444444']::uuid[],true)),'authorized media lookup works after restore');
+select pg_temp.assert_true((select count(*)=0 from public.get_visible_project_media(array['55555555-5555-4555-a555-555555555555']::uuid[],true)),'hidden media lookup remains denied');
+reset role;
+rollback;
