@@ -3,7 +3,6 @@ import {
   ArrowUpRight,
   Bell,
   Bookmark,
-  Compass,
   Github,
   Layers3,
   Plus,
@@ -14,13 +13,7 @@ import {
 import { getViewer } from "@/modules/auth/session";
 import { SidebarNav, MobileNavigation } from "./navigation";
 
-export async function AppShell({
-  children,
-  showTopbar = true,
-}: {
-  children: React.ReactNode;
-  showTopbar?: boolean;
-}) {
+export async function AppShell({ children }: { children: React.ReactNode }) {
   const viewer = await getViewer();
   const username = viewer?.profile?.username;
   const items = [
@@ -96,24 +89,6 @@ export async function AppShell({
         <MobileNavigation>{sidebar}</MobileNavigation>
       </header>
       <div className="app-main">
-        {showTopbar && (
-          <header className="topbar">
-            <div className="topbar-label">
-              <Compass size={15} />
-              <span>A home for shipped work</span>
-            </div>
-            <div className="topbar-actions">
-              <Link href="/search" className="icon-button" aria-label="Search projects and makers">
-                <Search size={18} />
-              </Link>
-              <span className="topbar-divider" />
-              <Link href={viewer ? "/publish" : "/login"} className="topbar-link">
-                {viewer ? "Publish project" : "Join the makers"}
-                <ArrowUpRight size={15} />
-              </Link>
-            </div>
-          </header>
-        )}
         <main id="main-content" tabIndex={-1}>
           {children}
         </main>

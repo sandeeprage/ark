@@ -11,6 +11,7 @@ test("visitor can browse, filter, and navigate without overflow", async ({ page 
   );
   await page.getByRole("link", { name: "Explore projects" }).click();
   await expect(page).toHaveURL(/\/explore$/);
+  await expect(page.locator(".topbar")).toHaveCount(0);
   await page.getByRole("link", { name: "Latest", exact: true }).click();
   await expect(page).toHaveURL(/tab=latest/);
   await page.getByLabel("Category", { exact: true }).selectOption("developer-tools");
