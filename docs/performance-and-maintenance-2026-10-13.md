@@ -31,6 +31,19 @@ The production cron is enabled for 03:00 UTC (08:30 Asia/Calcutta). Aggregate-on
 
 After the next scheduled run, inspect `maintenance_finished`, response status, failed leases, and remaining due jobs. Investigate repeated failed/deferred responses. No external alert destination is configured. Higher beta volume needs more frequent scheduling or a queue service with reviewed plan/cost implications.
 
-Production remeasurement follows deployment. Manual screen-reader testing, real-provider identity isolation, independent backup restore rehearsal, and a successful managed cleanup execution remain launch gates. [Web Vitals guidance](https://web.dev/articles/vitals) distinguishes lab from field data; automated accessibility scores are not conformance certification.
+## Deployed responsive-cover measurements
+
+| Explore          | Performance | Automated accessibility | LCP   | CLS | TBT    |
+| ---------------- | ----------- | ----------------------- | ----- | --- | ------ |
+| Responsive run 1 | 88          | 100                     | 2.2 s | 0   | 410 ms |
+| Responsive run 2 | 95          | 100                     | 2.0 s | 0   | 230 ms |
+
+Both LCP samples are below the 2.5-second good boundary, compared with the baseline's 3.6–3.7 seconds. Blocking-time variability means neither an invariant score of 95 nor uniformly fast interactions are established. No real-user INP or percentile data was collected. The homepage sample after the region move was 96/100, LCP 2.0 s, CLS 0, TBT 190 ms; its baseline was 98/100. These samples do not establish a homepage regression or improvement across all users.
+
+Live thumbnail probes returned 6474 bytes at 360 px, 19052 bytes at 768 px, and 37446 bytes at 1280 px, with correct WebP dimensions and no EXIF/ICC metadata. The baseline first-cover transfer was about 110 KiB, giving roughly 83% reduction at 768 px. The API returns no-store headers; invalid widths return 400 and missing projects 404. Sharing cover redirects correctly, anonymous maintenance remains 403, and Settings/Admin remain sign-in gated. Vercel confirmed `hnd1` for the deployed code. The public feed, catalog, Auth configuration and private-data boundary probes passed after the region move.
+
+Sanitized measurements are in `performance-metrics-2026-10-13.json`. Full local reports remain in ignored `.vercel` output. No real user content was changed or deleted by verification.
+
+Manual screen-reader testing, real-provider identity isolation, independent backup restore rehearsal, and a successful managed cleanup execution remain launch gates. [Web Vitals guidance](https://web.dev/articles/vitals) distinguishes lab from field data; automated accessibility scores are not conformance certification.
 
 Reproduce with `npx lighthouse https://ark-rage.vercel.app/explore --chrome-flags="--headless" --only-categories=performance,accessibility --output=json --output=html --output-path=.vercel/performance-explore`. Set `CHROME_PATH` to installed Chrome if necessary. `node scripts/summarize-lighthouse.mjs <report.json> ...` exports only safe metrics.
