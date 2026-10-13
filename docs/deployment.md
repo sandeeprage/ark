@@ -25,6 +25,6 @@ Run application and database checks before deploying. GitHub Actions runs both t
 
 ## Media maintenance
 
-The committed `vercel.json` invokes `/api/maintenance/media` daily at 03:00 UTC (08:30 Asia/Calcutta). Vercel supplies the configured `CRON_SECRET` as a bearer authorization header. Unauthenticated calls must return 403. Each invocation processes at most ten durable jobs; inspect failures and backlog before an invited beta. Preview deployments do not run production cron jobs.
+The committed `vercel.json` invokes `/api/maintenance/media` daily at 03:00 UTC (08:30 Asia/Calcutta). Vercel supplies the configured `CRON_SECRET` as a bearer authorization header. Unauthenticated calls must return 403. Each invocation processes at most ten media jobs plus one account-erasure job, then performs moderation retention cleanup; inspect failures and backlog before an invited beta. Preview deployments do not run production cron jobs.
 
 An authenticated manual invocation can permanently remove expired or retired screenshot objects. The deployment smoke test checks the unauthenticated boundary without triggering cleanup. A successful schedule configuration does not prove the first scheduled run succeeded; check Vercel's cron logs after it runs.

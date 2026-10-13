@@ -1,6 +1,6 @@
 # Checklist Design follow-up — 13 October 2026
 
-This follow-up implements the application findings in the historical audit. The user explicitly deferred the demo-video field and rendering; those remain unchanged. This is a local implementation report, not a production-completion claim.
+This follow-up implements the application findings in the historical audit. The user explicitly deferred the demo-video field and rendering; those remain unchanged.
 
 ## Implemented
 
@@ -27,11 +27,11 @@ This follow-up implements the application findings in the historical audit. The 
 
 ## Production prerequisites and independent checks
 
-Migration `202610130012_accounts_and_moderation.sql` has not been applied to managed Supabase. The application must not be deployed before this schema is ready: authenticated reads select the new avatar timestamp column and public maker reads use the new RPC.
+Migration `202610130012_accounts_and_moderation.sql` was applied transactionally to managed Supabase after explicit user approval. The editor content was compared with the tested local file before execution, and the dashboard returned success. Managed authorization probes verified public profile reads, denied anonymous reports, service-only avatar/erasure writes, and denied self-grant of administrator roles.
 
-The private `ark-avatars` bucket has been created with a 2 MiB limit and WebP-only uploads; the existing staging/media buckets were confirmed private. The owner restored the correct Supabase dashboard session. Migration 012 is prepared in the SQL editor and its full content was compared with the tested local file; execution and manual identity linking await action-time confirmation for the security-sensitive permissions. After approval, apply only migration 012 and verify grants/functions. Do not run the local Auth stub or database fixture scripts against production. Existing SQL-editor migrations are not registered in CLI history; do not use `db push` to replay them.
+The private `ark-avatars` bucket has been created with a 2 MiB limit and WebP-only uploads; the existing staging/media buckets were confirmed private. Manual identity linking was enabled with explicit approval and verified after reloading the provider settings. Do not run the local Auth stub or database fixture scripts against production. Existing SQL-editor migrations are not registered in CLI history; do not use `db push` to replay them.
 
-No administrator role has been assigned. The owner must identify and approve the intended ARK username before a privileged grant is made. Administrator provisioning is separate from the application migration.
+The owner approved `sndp` as moderation administrator. A guarded transaction resolved that exact active username and granted its private administrator role; the result returned `sndp / admin`. Administrator provisioning was separate from the application migration.
 
 The existing daily maintenance schedule processes a bounded erasure queue. Verify scheduled completion, backlog capacity, and failure alerting before opening public beta; immediate hiding is not proof that permanent erasure has completed. Provider authorization must also be revoked separately in GitHub/Google permissions if the user wants to revoke the external app grant.
 
