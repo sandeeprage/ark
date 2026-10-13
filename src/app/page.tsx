@@ -6,7 +6,7 @@ import { getViewer } from "@/modules/auth/session";
 import { SiteNavigation } from "@/components/site-navigation";
 
 export const metadata: Metadata = {
-  title: { absolute: "ARK — A home for shipped work" },
+  title: { absolute: "ARK" },
   description:
     "Discover completed projects, meet the developers behind them, and give your own work a place to be found.",
 };

@@ -7,7 +7,7 @@ import "./landing.css";
 import "./community.css";
 
 export const metadata: Metadata = {
-  title: { default: "ARK — A home for shipped work", template: "%s · ARK" },
+  title: { default: "ARK", template: "%s · ARK" },
   description:
     "Discover completed projects, meet the developers behind them, and build a portfolio of the work you’ve shipped.",
 };
