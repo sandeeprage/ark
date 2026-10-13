@@ -38,11 +38,15 @@ test("votes reconcile, failures roll back, and changed pages append without dupl
   page,
   request,
 }) => {
+  await page.clock.install();
   await page.goto("/explore");
   await expect(page.locator("article.project-card,article.project-row")).toHaveCount(20);
   const first = page
     .locator("article")
     .filter({ has: page.getByRole("heading", { name: "Discovery project 01", exact: true }) });
+  const voteBaseline = page.waitForResponse(
+    (response) => response.url().includes("/api/discovery/projects") && response.status() === 200,
+  );
   await first.getByRole("button", { name: "Upvote · 0 upvotes", exact: true }).click();
   await expect(
     first.getByRole("button", { name: "Remove upvote · 1 upvotes", exact: true }),
@@ -50,17 +54,30 @@ test("votes reconcile, failures roll back, and changed pages append without dupl
   await expect(
     first.getByRole("button", { name: "Remove upvote · 1 upvotes", exact: true }),
   ).toBeEnabled();
+  await (await voteBaseline).finished();
+  await expect(page.locator(".feed-refresh")).toHaveCount(0);
+  const backgroundCheck = page.waitForResponse(
+    (response) => response.url().includes("/api/discovery/projects") && response.status() === 200,
+  );
+  await page.clock.fastForward(60000);
+  await (await backgroundCheck).finished();
+  await expect(page.locator(".feed-refresh")).toHaveCount(0);
   await request.post("http://127.0.0.1:55431/__fail_vote");
   await first.getByRole("button", { name: "Remove upvote · 1 upvotes", exact: true }).click();
   await expect(first.getByRole("alert")).toContainText("active, eligible");
   await expect(
     first.getByRole("button", { name: "Remove upvote · 1 upvotes", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
+  const removedVoteBaseline = page.waitForResponse(
+    (response) => response.url().includes("/api/discovery/projects") && response.status() === 200,
+  );
   await first.getByRole("button", { name: "Remove upvote · 1 upvotes", exact: true }).click();
   await expect(
     first.getByRole("button", { name: "Upvote · 0 upvotes", exact: true }),
   ).toBeEnabled();
+  await (await removedVoteBaseline).finished();
   await expect(page).toHaveURL(/\/explore$/);
+  await expect(page.locator(".feed-refresh")).toHaveCount(0);
   await request.post("http://127.0.0.1:55431/__shift_discovery");
   await page.getByRole("button", { name: "Load more", exact: true }).click();
   await expect(page.locator("article.project-card,article.project-row")).toHaveCount(25);

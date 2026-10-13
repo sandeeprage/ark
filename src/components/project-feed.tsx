@@ -25,6 +25,8 @@ export function ProjectFeed({
   const signature = useRef(feedSignature(initial));
   const busy = useRef(false);
   const generation = useRef(0);
+  const voteRevision = useRef(0);
+  const needsVoteBaseline = useRef(false);
   async function read(url: string): Promise<Page> {
     const response = await fetch(url, { cache: "no-store" });
     if (!response.ok) throw new Error("Projects couldn’t be loaded. Try again.");
@@ -40,9 +42,14 @@ export function ProjectFeed({
         return;
       checking = true;
       lastCheck = Date.now();
+      const revision = voteRevision.current;
       try {
         const page = await read(headUrl);
-        if (active && page.signature !== signature.current) setChanged(true);
+        if (!active || revision !== voteRevision.current) return;
+        if (needsVoteBaseline.current) {
+          signature.current = page.signature;
+          needsVoteBaseline.current = false;
+        } else if (page.signature !== signature.current) setChanged(true);
       } catch {
         /* Background refresh checks do not interrupt browsing. */
       } finally {
@@ -58,7 +65,19 @@ export function ProjectFeed({
             : p,
         ),
       );
-      setChanged(true);
+      // The successful vote already updated its card. Acknowledge the new
+      // server order quietly, without moving cards while someone is browsing.
+      const revision = ++voteRevision.current;
+      needsVoteBaseline.current = true;
+      void read(headUrl)
+        .then((page) => {
+          if (!active || revision !== voteRevision.current) return;
+          signature.current = page.signature;
+          needsVoteBaseline.current = false;
+        })
+        .catch(() => {
+          // The next successful background check will establish the baseline.
+        });
     }
     const timer = setInterval(check, 60000);
     window.addEventListener("focus", check);
@@ -77,6 +96,7 @@ export function ProjectFeed({
     if (!url) return;
     busy.current = true;
     const version = generation.current;
+    const revision = voteRevision.current;
     setPending(true);
     setError("");
     try {
@@ -88,7 +108,12 @@ export function ProjectFeed({
         setChanged(false);
       } else {
         setProjects((rows) => appendUniqueProjects(rows, page.projects));
-        if (signature.current !== page.signature) setChanged(true);
+        if (
+          !needsVoteBaseline.current &&
+          revision === voteRevision.current &&
+          signature.current !== page.signature
+        )
+          setChanged(true);
       }
       setNextUrl(page.nextUrl);
     } catch (e) {
