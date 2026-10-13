@@ -22,6 +22,10 @@ test("visitor can browse, filter, and navigate without overflow", async ({ page 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   );
+  await page.getByRole("link", { name: "ARK home" }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole("heading", { name: "Good work deserves to be discovered." })).toBeVisible();
+  await expect(page.locator(".sidebar")).toHaveCount(0);
 });
 test("private routes gate visitors and explain OAuth availability", async ({ page }) => {
   await page.goto("/publish");

@@ -33,7 +33,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
   ];
   const sidebar = (
     <>
-      <Link href="/explore" className="brand" aria-label="ARK home">
+      <Link href="/" prefetch={true} className="brand" aria-label="ARK home">
         <span className="brand-mark">
           <Layers3 size={24} strokeWidth={1.6} />
         </span>
@@ -83,7 +83,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
         {sidebar}
       </aside>
       <header className="mobile-header">
-        <Link href="/explore" className="brand">
+        <Link href="/" prefetch={true} className="brand" aria-label="ARK home">
           <Layers3 size={23} strokeWidth={1.6} />
           ARK.
         </Link>

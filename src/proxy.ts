@@ -3,6 +3,9 @@ import { NextResponse, type NextRequest } from "next/server";
 import { isSupabaseConfigured, supabaseConfig } from "@/lib/config";
 
 export async function proxy(request: NextRequest) {
+  // The public landing page contains no session data. Serve it without waiting
+  // for the Supabase refresh that protected application routes still perform.
+  if (request.nextUrl.pathname === "/") return NextResponse.next();
   let response = NextResponse.next({ request });
   // Personalized pages and responses that refresh cookies must never be shared caches.
   response.headers.set("Cache-Control", "private, no-store");
