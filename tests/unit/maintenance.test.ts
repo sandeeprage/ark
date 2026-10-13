@@ -33,8 +33,8 @@ it("accepts Vercel cron authorization and returns uncached results", async () =>
   const response = await GET(request("test-cron-secret"));
   expect(response.status).toBe(200);
   expect(response.headers.get("cache-control")).toBe("private, no-store");
-  expect(await response.json()).toEqual({ completed: 0, failed: 0 });
-  expect(mocks.rpc).toHaveBeenCalledWith("claim_media_jobs", { p_limit: 10 });
+  expect(await response.json()).toEqual({ completed: 0, failed: 0, deferred: false });
+  expect(mocks.rpc).toHaveBeenCalledWith("claim_media_jobs", { p_limit: 1 });
 });
 it("does not accept the local fallback when a production cron secret is configured", async () => {
   expect((await POST(request("test-local-secret"))).status).toBe(403);
@@ -46,14 +46,31 @@ it("preserves authenticated local maintenance calls", async () => {
 });
 it("reports failed cleanup as a retryable service failure", async () => {
   mocks.rpc
+    .mockResolvedValueOnce({ data: [], error: null })
     .mockResolvedValueOnce({ data: [{ id: "fixture-job", attempts: 1 }], error: null })
     .mockResolvedValueOnce({ data: null, error: { code: "unavailable" } })
     .mockResolvedValueOnce({ data: null, error: null });
   const response = await POST(request("test-cron-secret"));
   expect(response.status).toBe(503);
-  expect(await response.json()).toEqual({ completed: 0, failed: 1 });
+  expect(await response.json()).toEqual({ completed: 0, failed: 1, deferred: false });
   expect(mocks.rpc).toHaveBeenCalledWith(
     "finish_media_job",
     expect.objectContaining({ p_success: false, p_code: "storage_cleanup_failed" }),
   );
+});
+it("reports unfinished work and stops claiming at the admission deadline", async () => {
+  const clock = vi.spyOn(Date, "now").mockReturnValue(1000);
+  mocks.rpc.mockImplementation(async () => {
+    clock.mockReturnValue(37000);
+    return { data: [], error: null };
+  });
+  try {
+    const response = await GET(request("test-cron-secret"));
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ completed: 0, failed: 0, deferred: true });
+    expect(mocks.rpc).toHaveBeenCalledTimes(1);
+    expect(mocks.rpc).toHaveBeenCalledWith("claim_account_erasure_jobs", { p_limit: 1 });
+  } finally {
+    clock.mockRestore();
+  }
 });

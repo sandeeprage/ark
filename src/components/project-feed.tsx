@@ -145,13 +145,24 @@ export function ProjectFeed({
         </div>
       )}
       <div className="project-grid">
-        {first.map((project) => (
-          <ProjectCard key={project.id} project={project} contextHref={contextHref} />
+        {first.map((project, index) => (
+          <ProjectCard
+            key={project.id}
+            project={project}
+            contextHref={contextHref}
+            eager={index === 0}
+          />
         ))}
       </div>
       <div className="project-list">
-        {rest.map((project) => (
-          <ProjectCard key={project.id} project={project} compact contextHref={contextHref} />
+        {rest.map((project, index) => (
+          <ProjectCard
+            key={project.id}
+            project={project}
+            compact
+            contextHref={contextHref}
+            eager={!grid && index === 0}
+          />
         ))}
       </div>
       {error && (

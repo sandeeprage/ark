@@ -92,6 +92,10 @@ test("maker publishes validated images, edits, pins, and deletes", async ({
   expect(state.processedImages).toHaveLength(2);
   expect(state.media[0].alt_text).toBe("A second toolkit screen");
   expect(state.assetStates).toEqual(["consumed", "consumed"]);
+  await page.goto("/explore");
+  await expect(page.locator(".project-cover img").first()).toHaveAttribute("loading", "eager");
+  await expect(page.locator(".project-cover img").first()).toHaveAttribute("fetchpriority", "high");
+  await page.goto("/projects/10000000-0000-4000-a000-000000000001");
   await page.getByRole("button", { name: "Pin on profile" }).click();
   await expect(page.getByRole("button", { name: "Unpin", exact: true })).toBeVisible();
   const enlarge = page.getByRole("button", {

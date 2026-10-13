@@ -2,6 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient, isStorageConfigured } from "@/lib/supabase/admin";
 import { eraseAccounts } from "@/modules/auth/erasure";
+import { cleanMedia } from "@/modules/maintenance/jobs";
 
 export const maxDuration = 60;
 export async function POST(request: NextRequest) {
@@ -12,56 +13,35 @@ export async function POST(request: NextRequest) {
   const actual = Buffer.from(request.headers.get("authorization") ?? "");
   if (actual.length !== expected.length || !timingSafeEqual(actual, expected))
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
-  const admin = createAdminClient();
-  const { data: jobs, error } = await admin.rpc("claim_media_jobs", { p_limit: 10 });
-  if (error) return NextResponse.json({ error: "unavailable" }, { status: 503 });
-  let completed = 0;
-  let failed = 0;
-  for (const job of (jobs ?? []) as { id: string; attempts: number }[]) {
-    let successful = true;
-    const { data: objects, error: readError } = await admin.rpc("media_job_objects", {
-      p_job: job.id,
-    });
-    if (readError) successful = false;
-    for (const bucket of ["ark-staging", "ark-media", "ark-avatars"]) {
-      const paths = ((objects ?? []) as { bucket: string; key: string }[])
-        .filter((obj) => obj.bucket === bucket)
-        .map((obj) => obj.key);
-      if (
-        paths.some(
-          (path) =>
-            !(
-              bucket === "ark-avatars"
-                ? /^avatars\/[0-9a-f-]{36}\/[0-9a-f-]{36}\.webp$/
-                : /^([0-9a-f-]{36}\/){2}[0-9a-f-]{36}(\.webp)?$/
-            ).test(path),
-        )
-      ) {
-        successful = false;
-        continue;
-      }
-      if (paths.length) {
-        const { error: removeError } = await admin.storage.from(bucket).remove(paths);
-        if (removeError) successful = false;
-      }
+  const started = Date.now();
+  // Stop admitting work at 35 s, abort work at 45 s, reserve 10 s for its failure record.
+  const budget = { canStart: () => Date.now() - started < 35000, finalizer: createAdminClient() };
+  const admin = createAdminClient({ signal: AbortSignal.timeout(45000) });
+  const accounts = await eraseAccounts(admin, budget);
+  const media = await cleanMedia(admin, budget);
+  let failed = accounts.failed + media.failed;
+  const completed = accounts.completed + media.completed;
+  if (budget.canStart()) {
+    try {
+      const retention = await admin.rpc("purge_moderation_records");
+      if (retention.error) failed++;
+    } catch {
+      failed++;
     }
-    const { error: finishError } = await admin.rpc("finish_media_job", {
-      p_job: job.id,
-      p_attempt: job.attempts,
-      p_success: successful,
-      p_code: successful ? null : "storage_cleanup_failed",
-    });
-    if (successful && !finishError) completed++;
-    else failed++;
   }
-  const accounts = await eraseAccounts(admin);
-  completed += accounts.completed;
-  failed += accounts.failed;
-  const retention = await admin.rpc("purge_moderation_records");
-  if (retention.error) failed++;
+  const deferred = !budget.canStart();
+  console.info(
+    JSON.stringify({
+      event: "maintenance_finished",
+      completed,
+      failed,
+      deferred,
+      duration_ms: Date.now() - started,
+    }),
+  );
   return NextResponse.json(
-    { completed, failed },
-    { status: failed ? 503 : 200, headers: { "Cache-Control": "private, no-store" } },
+    { completed, failed, deferred },
+    { status: failed || deferred ? 503 : 200, headers: { "Cache-Control": "private, no-store" } },
   );
 }
 

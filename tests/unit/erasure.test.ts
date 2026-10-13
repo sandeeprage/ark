@@ -30,7 +30,7 @@ it("cleans only captured owned objects before deleting Auth and completing the j
   expect(remove).toHaveBeenCalledWith([key]);
   expect(deleteUser).toHaveBeenCalledWith(actor, false);
   expect(remove.mock.invocationCallOrder[0]).toBeLessThan(deleteUser.mock.invocationCallOrder[0]);
-  expect(rpc).toHaveBeenLastCalledWith("finish_account_erasure", {
+  expect(rpc).toHaveBeenCalledWith("finish_account_erasure", {
     p_job: "job",
     p_attempt: 1,
     p_success: true,
@@ -41,7 +41,41 @@ it("preserves Auth until failed storage removal can be retried", async () => {
   remove.mockResolvedValue({ error: { code: "unavailable" } });
   expect(await eraseAccounts(admin)).toEqual({ completed: 0, failed: 1 });
   expect(deleteUser).not.toHaveBeenCalled();
-  expect(rpc).toHaveBeenLastCalledWith(
+  expect(rpc).toHaveBeenCalledWith(
+    "finish_account_erasure",
+    expect.objectContaining({ p_success: false }),
+  );
+});
+it("drains at most five accounts without claiming a sixth", async () => {
+  rpc.mockImplementation(async (name: string) => ({
+    data:
+      name === "claim_account_erasure_jobs"
+        ? [{ id: "job", attempts: 1, payload: { user_id: actor, objects: [] } }]
+        : null,
+    error: null,
+  }));
+  expect(await eraseAccounts(admin)).toEqual({ completed: 5, failed: 0 });
+  expect(deleteUser).toHaveBeenCalledTimes(5);
+  expect(rpc.mock.calls.filter(([name]) => name === "claim_account_erasure_jobs")).toHaveLength(5);
+});
+it("does not lease jobs when the time budget is exhausted", async () => {
+  expect(await eraseAccounts(admin, { canStart: () => false, finalizer: admin })).toEqual({
+    completed: 0,
+    failed: 0,
+  });
+  expect(rpc).not.toHaveBeenCalled();
+});
+it("records a thrown storage failure using the finalizer", async () => {
+  claim();
+  remove.mockRejectedValue(new Error("Fixture network outage"));
+  const finish = vi.fn().mockResolvedValue({ error: null });
+  const finalizer = { rpc: finish } as unknown as SupabaseClient;
+  expect(await eraseAccounts(admin, { canStart: () => true, finalizer })).toEqual({
+    completed: 0,
+    failed: 1,
+  });
+  expect(deleteUser).not.toHaveBeenCalled();
+  expect(finish).toHaveBeenCalledWith(
     "finish_account_erasure",
     expect.objectContaining({ p_success: false }),
   );

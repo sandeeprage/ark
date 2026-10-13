@@ -8,10 +8,12 @@ export function ProjectCard({
   project,
   compact = false,
   contextHref,
+  eager = false,
 }: {
   project: ProjectSummary;
   compact?: boolean;
   contextHref?: string;
+  eager?: boolean;
 }) {
   const href = `/projects/${project.id}${contextHref ? `?from=${encodeURIComponent(contextHref)}` : ""}`;
   return (
@@ -24,6 +26,8 @@ export function ProjectCard({
             width={project.cover.width}
             height={project.cover.height}
             unoptimized
+            loading={eager ? "eager" : "lazy"}
+            fetchPriority={eager ? "high" : "auto"}
           />
         ) : (
           <>
