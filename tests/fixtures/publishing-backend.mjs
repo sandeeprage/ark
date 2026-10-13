@@ -388,18 +388,20 @@ const server = http.createServer(async (request, response) => {
         };
         return json(null);
       }
-      if (name === "get_public_profile")
+      if (name === "get_public_profile") {
+        const self = input.p_username === "fixture_maker";
         return json([
           {
-            id: "00000000-0000-4000-a000-000000000002",
-            username: "other_maker",
-            display_name: "Other maker",
-            bio: "A test maker",
+            id: self ? owner : "00000000-0000-4000-a000-000000000002",
+            username: self ? "fixture_maker" : "other_maker",
+            display_name: self ? "Fixture maker" : "Other maker",
+            bio: self ? "Browser fixture only" : "A test maker",
             github_username: null,
             github_connected_at: null,
             created_at: "2026-10-12T00:00:00Z",
           },
         ]);
+      }
       if (name === "get_maker_follow_state")
         return json({ followers: Number(followed), following: 0, followed });
       if (name === "set_maker_follow") {

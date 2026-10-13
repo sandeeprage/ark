@@ -8,7 +8,6 @@ import {
   Plus,
   Search,
   Users,
-  UserRound,
 } from "lucide-react";
 import { getViewer } from "@/modules/auth/session";
 import { SidebarNav, MobileNavigation } from "./navigation";
@@ -22,14 +21,6 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
     { href: "/following", label: "Following", icon: "users" },
     { href: "/collections", label: "Collections", icon: "bookmark" },
     { href: "/notifications", label: "Notifications", icon: "bell" },
-  ];
-  const bottomItems = [
-    {
-      href: username ? `/makers/${username}` : "/login?next=/settings",
-      label: "Profile",
-      icon: "user",
-    },
-    { href: "/settings", label: "Settings", icon: "settings" },
   ];
   const sidebar = (
     <>
@@ -47,7 +38,6 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
         </Link>
       </div>
       <div className="sidebar-bottom">
-        <SidebarNav items={bottomItems} />
         {viewer ? (
           <Link href={username ? `/makers/${username}` : "/onboarding"} className="account-summary">
             <span className="avatar">
@@ -99,4 +89,4 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-export { ArrowUpRight, Bell, Bookmark, Github, Search, Users, UserRound };
+export { ArrowUpRight, Bell, Bookmark, Github, Search, Users };

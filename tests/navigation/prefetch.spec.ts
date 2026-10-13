@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test("production navigation prefetches and opens the correct account page", async ({
+test("account card opens the profile and keeps profile editing available", async ({
   page,
   request,
 }) => {
@@ -10,17 +10,12 @@ test("production navigation prefetches and opens the correct account page", asyn
   await expect(page).toHaveURL(/\/publish$/);
 
   const navigation = await page.context().newPage();
-  const settingsReady = navigation.waitForResponse(
-    (response) =>
-      new URL(response.url()).pathname === "/settings" &&
-      response.request().headers()["next-router-prefetch"] === "1" &&
-      response.status() === 200,
-  );
-  // A fresh navigation ensures this checks the production router's prefetch
-  // rather than data retained from the OAuth journey.
   await navigation.goto("/explore");
-  await settingsReady;
-  await navigation.getByRole("link", { name: "Settings", exact: true }).click();
+  await expect(navigation.getByRole("link", { name: "Profile", exact: true })).toHaveCount(0);
+  await expect(navigation.getByRole("link", { name: "Settings", exact: true })).toHaveCount(0);
+  await navigation.locator(".account-summary").click();
+  await expect(navigation).toHaveURL(/\/makers\/fixture_maker$/);
+  await navigation.getByRole("link", { name: "Edit profile" }).click();
   await expect(navigation.getByRole("heading", { name: "Settings", exact: true })).toBeVisible();
   await expect(navigation.getByText("Loading your next discovery…", { exact: true })).toHaveCount(
     0,

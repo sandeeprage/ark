@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { Bell, Bookmark, Compass, Menu, Settings2, UserRound, Users, X } from "lucide-react";
+import { Bell, Bookmark, Compass, Menu, Users, X } from "lucide-react";
 import { NotificationBadge } from "./notification-badge";
 
 const icons = {
@@ -11,8 +11,6 @@ const icons = {
   users: Users,
   bookmark: Bookmark,
   bell: Bell,
-  user: UserRound,
-  settings: Settings2,
 };
 export function SidebarNav({
   items,
