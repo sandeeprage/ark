@@ -14,6 +14,8 @@ import { SaveButton } from "@/components/save-button";
 import { getSavedStates } from "@/modules/collections/queries";
 import { getRepositoryVerification } from "@/modules/projects/verification";
 import { RepositoryVerification } from "@/components/repository-verification";
+import { ReportButton } from "@/components/report-button";
+import { safeReturnPath } from "@/modules/auth/validation";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const project = await getPublicProject((await params).id);
@@ -34,9 +36,31 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     },
   };
 }
-export default async function Project({ params }: { params: Promise<{ id: string }> }) {
+export default async function Project({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ from?: string }>;
+}) {
   const project = await getPublicProject((await params).id);
   if (!project) notFound();
+  const candidate = safeReturnPath((await searchParams).from);
+  const from =
+    /^\/(explore|search|following)(\?|$)|^\/(makers\/[a-z0-9_]{3,30}|collections\/[0-9a-f-]{36})(\?|$)/.test(
+      candidate,
+    )
+      ? candidate
+      : "/explore";
+  const backLabel = from.startsWith("/search")
+    ? "Back to Search"
+    : from.startsWith("/following")
+      ? "Back to Following"
+      : from.startsWith("/makers/")
+        ? "Back to maker"
+        : from.startsWith("/collections/")
+          ? "Back to collection"
+          : "Back to Explore";
   const [images, [vote], saved, management, verification, viewer] = await Promise.all([
     getProjectMedia(project.id),
     getVoteStates([project]),
@@ -52,9 +76,9 @@ export default async function Project({ params }: { params: Promise<{ id: string
   const url = `${process.env.NEXT_PUBLIC_SITE_URL || "http://127.0.0.1:3000"}/projects/${project.id}`;
   return (
     <div className="page project-detail">
-      <Link href="/explore" className="text-link">
+      <Link href={from} className="text-link">
         <ArrowLeft size={15} />
-        Back to Explore
+        {backLabel}
       </Link>
       <div className="project-intro">
         <p className="eyebrow">{project.category.toUpperCase()}</p>
@@ -115,6 +139,20 @@ export default async function Project({ params }: { params: Promise<{ id: string
             access={vote.vote_access}
           />
         </div>
+        {viewer?.id !== project.maker_id && (
+          <ReportButton
+            kind="project"
+            target={project.id}
+            path={`/projects/${project.id}`}
+            access={
+              !viewer
+                ? "anonymous"
+                : viewer.status === "active" && viewer.profile?.username
+                  ? "active"
+                  : "restricted"
+            }
+          />
+        )}
         {management && (
           <ProjectManagement id={project.id} name={project.name} pinned={management.pinned} />
         )}

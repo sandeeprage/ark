@@ -14,6 +14,17 @@ const user = {
   app_metadata: { provider: "github" },
   user_metadata: {},
   created_at: "2026-10-12T00:00:00Z",
+  last_sign_in_at: new Date().toISOString(),
+  identities: [
+    {
+      id: "fixture-github",
+      identity_id: "00000000-0000-4000-a000-000000000010",
+      provider: "github",
+      user_id: owner,
+      identity_data: {},
+      created_at: "2026-10-12T00:00:00Z",
+    },
+  ],
 };
 let project = null;
 let assets = new Map();
@@ -35,6 +46,11 @@ let failSave = false;
 let googleEnabled = false;
 let profileOverride = null;
 let repositoryVerification = null;
+let fixtureAdmin = false;
+let avatarKey = null;
+let avatarVersion = null;
+let reports = [];
+let decisions = [];
 function authSession() {
   const expires = Math.floor(Date.now() / 1000) + 3600;
   const jwt = [
@@ -111,7 +127,46 @@ const server = http.createServer(async (request, response) => {
       failVote = false;
       authCodes = new Map();
       authMode = "active";
+      fixtureAdmin = false;
+      avatarKey = null;
+      avatarVersion = null;
+      reports = [];
+      decisions = [];
+      user.last_sign_in_at = new Date().toISOString();
+      user.identities = [
+        {
+          id: "fixture-github",
+          identity_id: "00000000-0000-4000-a000-000000000010",
+          provider: "github",
+          user_id: owner,
+          identity_data: {},
+          created_at: "2026-10-12T00:00:00Z",
+        },
+      ];
       return json({ ready: true });
+    }
+    if (path === "/__account_mode") {
+      const input = body();
+      fixtureAdmin = Boolean(input.admin);
+      user.last_sign_in_at = input.expired ? "2020-01-01T00:00:00Z" : new Date().toISOString();
+      if (input.both)
+        user.identities.push({
+          id: "fixture-google",
+          identity_id: "00000000-0000-4000-a000-000000000011",
+          provider: "google",
+          user_id: owner,
+          identity_data: {},
+          created_at: "2026-10-12T00:00:00Z",
+        });
+      return json({ ready: true });
+    }
+    if (path.startsWith("/auth/v1/user/identities/") && request.method === "DELETE") {
+      if (user.identities.length < 2)
+        return json({ message: "Keep an identity", error_code: "last_identity" }, 400);
+      user.identities = user.identities.filter(
+        (identity) => identity.identity_id !== path.split("/").pop(),
+      );
+      return json({});
     }
     if (path === "/__auth_mode") {
       authMode = body().mode;
@@ -146,6 +201,16 @@ const server = http.createServer(async (request, response) => {
       googleEnabled = true;
       authMode = body().onboarding ? "onboarding" : "active";
       user.app_metadata.provider = "google";
+      user.identities = [
+        {
+          id: "fixture-google",
+          identity_id: "00000000-0000-4000-a000-000000000011",
+          provider: "google",
+          user_id: owner,
+          identity_data: {},
+          created_at: "2026-10-12T00:00:00Z",
+        },
+      ];
       return json({ ready: true });
     }
     if (path === "/__fail_save") {
@@ -205,6 +270,19 @@ const server = http.createServer(async (request, response) => {
         assetStates: [...assets.values()].map((asset) => asset.state),
         processedImages: [...files.keys()].filter((key) => key.startsWith("ark-media/")),
       });
+    if (path === "/auth/v1/user/identities/authorize") {
+      const provider = url.searchParams.get("provider");
+      if (!user.identities.some((identity) => identity.provider === provider))
+        user.identities.push({
+          id: `fixture-${provider}`,
+          identity_id: "00000000-0000-4000-a000-000000000012",
+          provider,
+          user_id: owner,
+          identity_data: {},
+          created_at: new Date().toISOString(),
+        });
+      return json({ url: `http://127.0.0.1:55431/auth/v1/authorize?${url.searchParams}` });
+    }
     if (path === "/auth/v1/authorize") {
       const code = randomUUID();
       authCodes.set(code, url.searchParams.get("code_challenge"));
@@ -251,9 +329,17 @@ const server = http.createServer(async (request, response) => {
             profileOverride?.display_name ??
             (googleEnabled ? "Google fixture maker" : "Fixture maker"),
           bio: "Browser fixture only",
-          github_username: googleEnabled ? null : "fixture_maker",
-          github_connected_at: googleEnabled ? null : "2026-10-12T00:00:00Z",
+          github_username:
+            googleEnabled || !user.identities.some((identity) => identity.provider === "github")
+              ? null
+              : "fixture_maker",
+          github_connected_at:
+            googleEnabled || !user.identities.some((identity) => identity.provider === "github")
+              ? null
+              : "2026-10-12T00:00:00Z",
           created_at: "2026-10-12T00:00:00Z",
+          avatar_object_key: avatarKey,
+          avatar_updated_at: avatarVersion,
         },
       ]);
     if (path === "/rest/v1/categories")
@@ -264,7 +350,59 @@ const server = http.createServer(async (request, response) => {
       const name = path.split("/").pop(),
         input = body();
       if (name === "my_account_status")
-        return json(authMode === "suspended" ? "suspended" : "active");
+        return json(
+          authMode === "suspended" ? "suspended" : authMode === "deleting" ? "deleting" : "active",
+        );
+      if (name === "my_admin_access") return json(fixtureAdmin);
+      if (name === "reserve_profile_avatar") return json(null);
+      if (name === "set_profile_avatar") {
+        avatarKey = input.p_key;
+        avatarVersion = new Date().toISOString();
+        return json(null);
+      }
+      if (name === "request_my_account_erasure") {
+        if (input.p_confirmation !== "fixture_maker") return json({ code: "22023" }, 400);
+        authMode = "deleting";
+        return json(null);
+      }
+      if (name === "report_content") {
+        reports.push({
+          id: randomUUID(),
+          target_kind: input.p_kind,
+          target_id: input.p_target,
+          reason: input.p_reason,
+          details: input.p_details,
+          status: "open",
+          created_at: new Date().toISOString(),
+        });
+        return json(reports.at(-1).id);
+      }
+      if (name === "list_content_reports")
+        return fixtureAdmin ? json(reports) : json({ code: "42501" }, 403);
+      if (name === "get_my_report_statuses")
+        return json(
+          reports.map((report) => ({
+            id: report.id,
+            target_kind: report.target_kind,
+            reason: report.reason,
+            status: report.status,
+            created_at: report.created_at,
+          })),
+        );
+      if (name === "list_moderation_audit")
+        return fixtureAdmin ? json(decisions) : json({ code: "42501" }, 403);
+      if (name === "moderate_report") {
+        if (!fixtureAdmin) return json({ code: "42501" }, 403);
+        const report = reports.find((entry) => entry.id === input.p_report);
+        report.status = input.p_action === "dismiss" ? "dismissed" : "resolved";
+        decisions.push({
+          id: randomUUID(),
+          action: input.p_action,
+          reason: input.p_reason,
+          created_at: new Date().toISOString(),
+        });
+        return json(null);
+      }
       if (name === "get_public_repository_verification") return json(repositoryVerification);
       if (name === "sync_my_github_identity") return json(null);
       if (name === "update_my_profile") {
@@ -388,7 +526,7 @@ const server = http.createServer(async (request, response) => {
         };
         return json(null);
       }
-      if (name === "get_public_profile") {
+      if (name === "get_public_profile" || name === "get_public_profile_details") {
         const self = input.p_username === "fixture_maker";
         return json([
           {
@@ -584,10 +722,18 @@ const server = http.createServer(async (request, response) => {
         response.end(image);
         return;
       }
-    if (path.startsWith("/storage/v1/object/ark-media/") && request.method === "POST") {
+    if (
+      (path.startsWith("/storage/v1/object/ark-media/") ||
+        path.startsWith("/storage/v1/object/ark-avatars/")) &&
+      request.method === "POST"
+    ) {
       const key = decodeURIComponent(path.slice("/storage/v1/object/".length));
       files.set(key, bytes);
       return json({ Key: key });
+    }
+    if (path === "/storage/v1/object/ark-avatars" && request.method === "DELETE") {
+      for (const key of body().prefixes ?? []) files.delete(`ark-avatars/${key}`);
+      return json([]);
     }
     return json({ message: "Unknown fixture route" }, 404);
   } catch (error) {

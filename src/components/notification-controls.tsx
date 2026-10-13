@@ -43,6 +43,7 @@ export function MarkRead({ id, cutoff }: { id?: string; cutoff?: string }) {
 }
 export function NotificationPreferences({ initial }: { initial: Preferences }) {
   const [values, setValues] = useState(initial);
+  const [saved, setSaved] = useState(initial);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [pending, start] = useTransition();
@@ -56,7 +57,10 @@ export function NotificationPreferences({ initial }: { initial: Preferences }) {
           try {
             const result = await saveNotificationPreferences(values);
             if (!result.ok) setError(result.error);
-            else setMessage("Preferences saved.");
+            else {
+              setSaved(values);
+              setMessage("Preferences saved.");
+            }
           } catch {
             setError("Check your connection and try again.");
           }
@@ -65,6 +69,19 @@ export function NotificationPreferences({ initial }: { initial: Preferences }) {
     >
       <fieldset disabled={pending} className="collection-picker">
         <legend>Notify me when</legend>
+        <button
+          type="button"
+          className="button button-outline"
+          onClick={() => {
+            const muted = !values.follows && !values.upvotes && !values.launches;
+            setValues({ follows: muted, upvotes: muted, launches: muted });
+            setMessage("");
+          }}
+        >
+          {!values.follows && !values.upvotes && !values.launches
+            ? "Enable all notifications"
+            : "Mute all notifications"}
+        </button>
         {(
           [
             ["follows", "Someone follows me"],
@@ -76,14 +93,20 @@ export function NotificationPreferences({ initial }: { initial: Preferences }) {
             <input
               type="checkbox"
               checked={values[key]}
-              onChange={(e) => setValues({ ...values, [key]: e.target.checked })}
+              onChange={(e) => {
+                setMessage("");
+                setValues({ ...values, [key]: e.target.checked });
+              }}
             />
             {label}
           </label>
         ))}
       </fieldset>
       <p className="form-note">Preferences apply to new notifications.</p>
-      <button className="button button-outline" disabled={pending}>
+      <button
+        className="button button-outline"
+        disabled={pending || JSON.stringify(saved) === JSON.stringify(values)}
+      >
         {pending ? "Saving…" : "Save preferences"}
       </button>
       {error && (

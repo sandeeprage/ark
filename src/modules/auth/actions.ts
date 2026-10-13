@@ -7,7 +7,12 @@ import { profileSchema, safeReturnPath } from "./validation";
 import { headers, cookies } from "next/headers";
 import { configuredAuthOrigin, loginDestination } from "./redirects";
 
-export type FormState = { error?: string; success?: string; fields?: Record<string, string[]> };
+export type FormState = {
+  error?: string;
+  success?: string;
+  fields?: Record<string, string[]>;
+  saved?: { username: string; display_name: string; bio: string };
+};
 
 export async function signIn(form: FormData) {
   if (!isSupabaseConfigured()) redirect("/login?error=setup");
@@ -60,7 +65,11 @@ export async function saveProfile(_previous: FormState, form: FormData): Promise
     bio: form.get("bio"),
   });
   if (!parsed.success)
-    return { error: "Check the highlighted fields.", fields: parsed.error.flatten().fieldErrors };
+    return {
+      saved: _previous.saved,
+      error: "Check the highlighted fields.",
+      fields: parsed.error.flatten().fieldErrors,
+    };
   if (!isSupabaseConfigured()) return { error: "Connect Supabase before saving your profile." };
   const client = await createClient();
   const {
@@ -80,6 +89,15 @@ export async function saveProfile(_previous: FormState, form: FormData): Promise
           : "Your profile could not be saved. Check your account access and try again.",
     };
   revalidatePath("/", "layout");
-  if (form.get("onboarding") === "true") redirect(safeReturnPath(form.get("next")));
-  return { success: "Profile saved." };
+  if (form.get("onboarding") === "true") {
+    (await cookies()).set("ark-profile-created", "1", {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 30,
+    });
+    redirect(safeReturnPath(form.get("next")));
+  }
+  return { success: "Profile saved.", saved: parsed.data };
 }

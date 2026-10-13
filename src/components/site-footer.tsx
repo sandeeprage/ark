@@ -23,7 +23,12 @@ export function SiteFooter() {
       </div>
       <div className="site-footer-bottom">
         <span>© ARK. Built for people who build.</span>
-        <Link href="/makers">Meet the community ↗</Link>
+        <nav className="legal-links" aria-label="Support and policies">
+          <Link href="/help">Help</Link>
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/terms">Terms</Link>
+          <Link href="/status">Service info</Link>
+        </nav>
       </div>
     </footer>
   );

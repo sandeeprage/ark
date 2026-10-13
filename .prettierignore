@@ -5,6 +5,7 @@ node_modules
 .git
 .local-postgres
 .local-postgres-check
+.local-postgres-audit
 package-lock.json
 test-results
 playwright-report

@@ -13,6 +13,11 @@ function CollectionEditor({ collection }: { collection: Collection }) {
   const [title, setTitle] = useState(collection.title);
   const [description, setDescription] = useState(collection.description);
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [saved, setSaved] = useState({
+    title: collection.title,
+    description: collection.description,
+  });
   const [pending, start] = useTransition();
   return (
     <article className="collection-editor">
@@ -27,11 +32,16 @@ function CollectionEditor({ collection }: { collection: Collection }) {
           onSubmit={(e) => {
             e.preventDefault();
             setError("");
+            setMessage("");
             start(async () => {
               try {
                 const result = await updateCollection(collection.id, title, description);
                 if (!result.ok) setError(result.error);
-                else router.refresh();
+                else {
+                  setSaved({ title, description });
+                  setMessage("Collection saved.");
+                  router.refresh();
+                }
               } catch {
                 setError("Check your connection and try again.");
               }
@@ -43,7 +53,10 @@ function CollectionEditor({ collection }: { collection: Collection }) {
               Title
               <input
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  setMessage("");
+                }}
                 required
                 maxLength={80}
               />
@@ -52,11 +65,19 @@ function CollectionEditor({ collection }: { collection: Collection }) {
               Description
               <textarea
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={(e) => {
+                  setDescription(e.target.value);
+                  setMessage("");
+                }}
                 maxLength={500}
               />
             </label>
-            <button className="button button-outline">Save collection</button>
+            <button
+              className="button button-outline"
+              disabled={pending || (title === saved.title && description === saved.description)}
+            >
+              {pending ? "Saving…" : "Save collection"}
+            </button>
             <button
               type="button"
               className="button button-outline"
@@ -88,6 +109,7 @@ function CollectionEditor({ collection }: { collection: Collection }) {
           {error}
         </p>
       )}
+      {message && <p role="status">{message}</p>}
     </article>
   );
 }
@@ -158,10 +180,7 @@ export function CollectionManager({ collections }: { collections: Collection[] }
         {error && <p role="alert">{error}</p>}
       </form>
       {collections.map((c) => (
-        <CollectionEditor
-          key={c.id + JSON.stringify([c.title, c.description, c.project_count])}
-          collection={c}
-        />
+        <CollectionEditor key={c.id} collection={c} />
       ))}
       {!collections.length && <p>Save a project to create your default Saved collection.</p>}
     </>

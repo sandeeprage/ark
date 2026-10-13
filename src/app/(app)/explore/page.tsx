@@ -62,8 +62,8 @@ export default async function Explore({ searchParams }: { searchParams: Promise<
                   : "Latest launches"}
             </h2>
             <span>
-              {result.projects.length
-                ? `${result.projects.length} projects`
+              {result.state === "ready"
+                ? `${result.projects.length} projects on this page`
                 : "Made by developers, for everyone"}
             </span>
           </div>
@@ -104,6 +104,7 @@ export default async function Explore({ searchParams }: { searchParams: Promise<
             />
           ) : (
             <ProjectFeed
+              contextHref={feedUrl(filters, { cursor: null })}
               key={filterScope(filters) + JSON.stringify(filters.cursor)}
               initial={result.projects}
               initialNextUrl={

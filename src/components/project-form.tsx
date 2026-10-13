@@ -93,12 +93,19 @@ export function ProjectForm({
   const [progress, setProgress] = useState("");
   const [dirty, setDirty] = useState(false);
   const [restored, setRestored] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  const errorSummary = useRef<HTMLParagraphElement>(null);
+  const dragDepth = useRef(0);
+  const stopRequested = useRef(false);
   const requestKey = useRef<string>("");
   const projectId = useRef(initial?.id ?? "");
   const dirtyRef = useRef(false);
   const initialVersion = initial?.version;
   const filePicker = useRef<HTMLInputElement>(null);
   const blobs = useRef(new Set<string>());
+  useEffect(() => {
+    if (error) errorSummary.current?.focus();
+  }, [error]);
   useEffect(() => {
     const previewBlobs = blobs.current;
     try {
@@ -185,6 +192,12 @@ export function ProjectForm({
   function field<K extends keyof ProjectFormValues>(key: K, value: ProjectFormValues[K]) {
     changed();
     setValues((previous) => ({ ...previous, [key]: value }));
+    setFields((previous) => {
+      const next = { ...previous };
+      delete next[key];
+      return next;
+    });
+    setError("");
   }
   function addFiles(files: FileList | null) {
     if (!files) return;
@@ -249,6 +262,7 @@ export function ProjectForm({
     setError("");
     setFields({});
     setConflict(false);
+    stopRequested.current = false;
     const parsed = projectInputSchema.safeParse(values);
     if (!parsed.success) {
       setFields(parsed.error.flatten().fieldErrors);
@@ -296,10 +310,14 @@ export function ProjectForm({
       }
       const working = screenshots.map((image) => ({ ...image }));
       for (let index = 0; index < working.length; index++) {
+        if (stopRequested.current)
+          throw new Error(
+            "Upload stopped. Your input and selected screenshots have been kept; submit again when you are ready.",
+          );
         const image = working[index];
         if (image.ready) continue;
         if (!image.file) throw new Error("Select this screenshot again to continue.");
-        setProgress(`Processing screenshot ${index + 1} of ${working.length}…`);
+        setProgress(`Processing ${image.file.name} (${index + 1} of ${working.length})…`);
         updateImage(image.localId, { error: undefined });
         try {
           if (!image.assetId) {
@@ -345,6 +363,10 @@ export function ProjectForm({
           throw uploadFailure;
         }
       }
+      if (stopRequested.current)
+        throw new Error(
+          "Upload stopped. Your input and selected screenshots have been kept; submit again when you are ready.",
+        );
       const selection = {
         ids: working.map((image) => image.assetId!),
         alt: working.map((image) => image.alt.trim()),
@@ -361,9 +383,7 @@ export function ProjectForm({
       }
       clearCache();
       router.push(
-        initial?.status === "hidden"
-          ? `/projects/${projectId.current}/edit?saved=1`
-          : `/projects/${projectId.current}`,
+        initial ? `/projects/${projectId.current}/edit?saved=1` : `/projects/${projectId.current}`,
       );
       router.refresh();
     } catch (submitError) {
@@ -380,6 +400,16 @@ export function ProjectForm({
   const errorFor = (key: string) => fields[key]?.[0];
   return (
     <form onSubmit={submit} className="project-form">
+      {error && (
+        <p
+          ref={errorSummary}
+          tabIndex={-1}
+          className="notice notice-error form-error-summary"
+          role="alert"
+        >
+          {error}
+        </p>
+      )}
       {restored && (
         <p className="notice">
           Your text was restored from this tab. After a reload, new screenshots need to be selected
@@ -407,6 +437,9 @@ export function ProjectForm({
               <label className="form-field">
                 Project name
                 <input
+                  id="project-name"
+                  aria-label="Project name"
+                  aria-describedby="project-name-error"
                   value={values.name}
                   onChange={(e) => field("name", e.target.value)}
                   required
@@ -415,11 +448,16 @@ export function ProjectForm({
                   placeholder="Your project’s name"
                   aria-invalid={Boolean(errorFor("name"))}
                 />
-                <small className="field-error">{errorFor("name")}</small>
+                <small id="project-name-error" className="field-error">
+                  {errorFor("name")}
+                </small>
               </label>
               <label className="form-field">
                 Tagline
                 <input
+                  id="project-tagline"
+                  aria-label="Tagline"
+                  aria-describedby="project-tagline-help project-tagline-error"
                   value={values.tagline}
                   onChange={(e) => field("tagline", e.target.value)}
                   required
@@ -428,12 +466,17 @@ export function ProjectForm({
                   placeholder="What does it do, in one sentence?"
                   aria-invalid={Boolean(errorFor("tagline"))}
                 />
-                <small>{values.tagline.length}/160</small>
-                <small className="field-error">{errorFor("tagline")}</small>
+                <small id="project-tagline-help">{values.tagline.length}/160</small>
+                <small id="project-tagline-error" className="field-error">
+                  {errorFor("tagline")}
+                </small>
               </label>
               <label className="form-field">
                 Description
                 <textarea
+                  id="project-description"
+                  aria-label="Description"
+                  aria-describedby="project-description-help project-description-error"
                   rows={7}
                   value={values.description}
                   onChange={(e) => field("description", e.target.value)}
@@ -443,10 +486,12 @@ export function ProjectForm({
                   placeholder="What problem does it solve? Who is it for? What can people do with it today?"
                   aria-invalid={Boolean(errorFor("description"))}
                 />
-                <small>
+                <small id="project-description-help">
                   Plain text. At least 100 characters. {values.description.length}/10,000
                 </small>
-                <small className="field-error">{errorFor("description")}</small>
+                <small id="project-description-error" className="field-error">
+                  {errorFor("description")}
+                </small>
               </label>
             </div>
           </div>
@@ -474,35 +519,50 @@ export function ProjectForm({
                 </span>
                 <input
                   type="url"
+                  aria-label="Live website"
+                  aria-invalid={Boolean(errorFor("live_url"))}
+                  aria-describedby="live-url-error"
                   value={values.live_url}
                   onChange={(e) => field("live_url", e.target.value)}
                   required={values.launch_kind === "hosted"}
                   placeholder="https://your-project.com"
                   maxLength={2000}
                 />
-                <small className="field-error">{errorFor("live_url")}</small>
+                <small id="live-url-error" className="field-error">
+                  {errorFor("live_url")}
+                </small>
               </label>
               <label className="form-field">
                 GitHub repository <span className="optional">optional</span>
                 <input
                   type="url"
+                  aria-label="GitHub repository"
+                  aria-invalid={Boolean(errorFor("github_url"))}
+                  aria-describedby="github-url-error"
                   value={values.github_url}
                   onChange={(e) => field("github_url", e.target.value)}
                   placeholder="https://github.com/you/project"
                   maxLength={2000}
                 />
-                <small className="field-error">{errorFor("github_url")}</small>
+                <small id="github-url-error" className="field-error">
+                  {errorFor("github_url")}
+                </small>
               </label>
               <label className="form-field">
                 Public release or package <span className="optional">optional</span>
                 <input
                   type="url"
+                  aria-label="Public release or package"
+                  aria-invalid={Boolean(errorFor("release_url"))}
+                  aria-describedby="release-url-error"
                   value={values.release_url}
                   onChange={(e) => field("release_url", e.target.value)}
                   placeholder="https://…"
                   maxLength={2000}
                 />
-                <small className="field-error">{errorFor("release_url")}</small>
+                <small id="release-url-error" className="field-error">
+                  {errorFor("release_url")}
+                </small>
               </label>
               <label className="form-field">
                 Demo video <span className="optional">optional</span>
@@ -524,10 +584,24 @@ export function ProjectForm({
             <h2>Show your work</h2>
             <p>1–8 screenshots. PNG, JPEG, or WebP. Up to 5 MiB and 4096 × 4096 pixels each.</p>
             <div
-              className="upload-dropzone"
+              className={`upload-dropzone ${dragging ? "is-dragging" : ""}`}
+              onDragEnter={(event) => {
+                event.preventDefault();
+                if (!busy) {
+                  dragDepth.current++;
+                  setDragging(true);
+                }
+              }}
+              onDragLeave={(event) => {
+                event.preventDefault();
+                dragDepth.current = Math.max(0, dragDepth.current - 1);
+                if (!dragDepth.current) setDragging(false);
+              }}
               onDragOver={(event) => event.preventDefault()}
               onDrop={(event) => {
                 event.preventDefault();
+                dragDepth.current = 0;
+                setDragging(false);
                 if (!busy) addFiles(event.dataTransfer.files);
               }}
             >
@@ -649,6 +723,9 @@ export function ProjectForm({
                 Primary category
                 <select
                   required
+                  aria-label="Primary category"
+                  aria-invalid={Boolean(errorFor("category_id"))}
+                  aria-describedby="category-error"
                   value={values.category_id}
                   onChange={(e) => field("category_id", e.target.value)}
                 >
@@ -659,9 +736,15 @@ export function ProjectForm({
                     </option>
                   ))}
                 </select>
-                <small className="field-error">{errorFor("category_id")}</small>
+                <small id="category-error" className="field-error">
+                  {errorFor("category_id")}
+                </small>
               </label>
-              <fieldset className="technology-picker">
+              <fieldset
+                className="technology-picker"
+                aria-describedby="technologies-error"
+                aria-invalid={Boolean(errorFor("technology_ids"))}
+              >
                 <legend>
                   Tech stack <span className="optional">choose 1–10</span>
                 </legend>
@@ -689,7 +772,9 @@ export function ProjectForm({
                     {technology.name}
                   </label>
                 ))}
-                <small className="field-error">{errorFor("technology_ids")}</small>
+                <small id="technologies-error" className="field-error">
+                  {errorFor("technology_ids")}
+                </small>
               </fieldset>
             </div>
           </div>
@@ -706,6 +791,8 @@ export function ProjectForm({
             <label className="launch-confirmation">
               <input
                 type="checkbox"
+                aria-invalid={Boolean(errorFor("launch_confirmed"))}
+                aria-describedby="launch-error"
                 checked={values.launch_confirmed}
                 onChange={(e) => field("launch_confirmed", e.target.checked)}
                 required
@@ -715,17 +802,14 @@ export function ProjectForm({
                 A repository includes usable software and clear run or install instructions.
               </span>
             </label>
-            <small className="field-error">{errorFor("launch_confirmed")}</small>
+            <small id="launch-error" className="field-error">
+              {errorFor("launch_confirmed")}
+            </small>
           </div>
         </section>
       </fieldset>
       <div className="publish-submit">
         <div aria-live="polite">
-          {error && (
-            <p className="notice notice-error" role="alert">
-              {error}
-            </p>
-          )}
           {progress && (
             <p className="progress-note" role="status">
               {progress}
@@ -741,10 +825,26 @@ export function ProjectForm({
             Reload current version
           </button>
         )}
-        <button className="button button-primary" type="submit" disabled={busy || !storageReady}>
+        <button
+          className="button button-primary"
+          type="submit"
+          disabled={busy || !storageReady || Boolean(initial && !dirty)}
+        >
           {busy ? "Working…" : initial ? "Save changes" : "Publish project"}
           <ArrowRight size={16} />
         </button>
+        {busy && (
+          <button
+            className="button button-outline"
+            type="button"
+            onClick={() => {
+              stopRequested.current = true;
+              setProgress("Stopping after the current step…");
+            }}
+          >
+            Stop after current step
+          </button>
+        )}
         <p className="form-note">
           Screenshots are checked and metadata is removed before they become public.
         </p>

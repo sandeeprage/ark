@@ -3,7 +3,9 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   devIndicators: false,
-  distDir:process.env.ARK_TEST_DIST_DIR || ".next",
+  agentRules: false,
+  experimental: { serverActions: { bodySizeLimit: "3mb" } },
+  distDir: process.env.ARK_TEST_DIST_DIR || ".next",
   async headers() {
     return [
       {

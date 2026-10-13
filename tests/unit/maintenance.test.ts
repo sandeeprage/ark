@@ -1,6 +1,7 @@
 import { beforeEach, afterEach, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 const mocks = vi.hoisted(() => ({ rpc: vi.fn(), admin: vi.fn() }));
+vi.mock("server-only", () => ({}));
 vi.mock("@/lib/supabase/admin", () => ({
   isStorageConfigured: () => true,
   createAdminClient: () => {

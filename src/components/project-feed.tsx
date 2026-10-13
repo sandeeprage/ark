@@ -11,11 +11,13 @@ export function ProjectFeed({
   initialNextUrl,
   headUrl,
   grid = true,
+  contextHref = "/explore",
 }: {
   initial: ProjectSummary[];
   initialNextUrl: string | null;
   headUrl: string;
   grid?: boolean;
+  contextHref?: string;
 }) {
   const [projects, setProjects] = useState(initial);
   const [nextUrl, setNextUrl] = useState(initialNextUrl);
@@ -144,12 +146,12 @@ export function ProjectFeed({
       )}
       <div className="project-grid">
         {first.map((project) => (
-          <ProjectCard key={project.id} project={project} />
+          <ProjectCard key={project.id} project={project} contextHref={contextHref} />
         ))}
       </div>
       <div className="project-list">
         {rest.map((project) => (
-          <ProjectCard key={project.id} project={project} compact />
+          <ProjectCard key={project.id} project={project} compact contextHref={contextHref} />
         ))}
       </div>
       {error && (

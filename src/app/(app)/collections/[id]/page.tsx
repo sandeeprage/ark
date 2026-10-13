@@ -37,7 +37,7 @@ export default async function CollectionPage({
       {result.projects.length ? (
         <div className="project-grid">
           {result.projects.map((p) => (
-            <ProjectCard key={p.id} project={p} />
+            <ProjectCard key={p.id} project={p} contextHref={`/collections/${collection.id}`} />
           ))}
         </div>
       ) : (

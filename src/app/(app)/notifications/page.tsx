@@ -5,6 +5,7 @@ import { notificationPage, notificationStatus } from "@/modules/notifications/qu
 import { MarkRead } from "@/components/notification-controls";
 import { EmptyState } from "@/components/empty-state";
 import { NotificationRefresh } from "@/components/notification-refresh";
+import { eventTime } from "@/lib/event-time";
 export const metadata = { title: "Notifications" };
 export default async function Notifications({
   searchParams,
@@ -54,13 +55,17 @@ export default async function Notifications({
                     </>
                   )}
                 </p>
-                <time dateTime={n.created_at}>
-                  {new Date(n.created_at).toLocaleString("en-IN", {
-                    timeZone: "Asia/Kolkata",
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                  })}{" "}
-                  IST
+                <time
+                  dateTime={n.created_at}
+                  title={
+                    new Date(n.created_at).toLocaleString("en-IN", {
+                      timeZone: "Asia/Kolkata",
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    }) + " IST"
+                  }
+                >
+                  {eventTime(n.created_at)}
                 </time>
                 {!n.read_at && <span className="tag">Unread</span>}
               </div>

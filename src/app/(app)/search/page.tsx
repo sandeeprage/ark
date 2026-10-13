@@ -41,10 +41,11 @@ export default async function Search({ searchParams }: { searchParams: Promise<S
         <>
           <div className="results-heading">
             <h2>Projects</h2>
-            <span>{result.projects.length} results</span>
+            <span>{result.projects.length} results on this page</span>
           </div>
           {result.projects.length ? (
             <ProjectFeed
+              contextHref={feedUrl(filters, { cursor: null }, "/search")}
               key={filterScope(filters) + JSON.stringify(filters.cursor)}
               initial={result.projects}
               initialNextUrl={
@@ -55,12 +56,17 @@ export default async function Search({ searchParams }: { searchParams: Promise<S
               headUrl={feedUrl(filters, { cursor: null }, "/api/discovery/projects")}
             />
           ) : (
-            <p className="inline-empty">No projects match this search.</p>
+            <EmptyState
+              kind="search"
+              title="No projects match this search."
+              description="Try a shorter project name, or remove a category or technology filter."
+              action={{ label: "Reset search", href: "/search" }}
+            />
           )}
 
           <div className="results-heading">
             <h2>Makers</h2>
-            <span>{people.makers.length} results</span>
+            <span>{people.makers.length} results shown</span>
           </div>
           {people.makers.length ? (
             <div className="maker-results">
@@ -76,7 +82,12 @@ export default async function Search({ searchParams }: { searchParams: Promise<S
               ))}
             </div>
           ) : (
-            <p className="inline-empty">No makers match this search.</p>
+            <EmptyState
+              kind="search"
+              title="No makers match this search."
+              description="Try a maker’s display name or ARK username. Project filters do not narrow maker results."
+              action={{ label: "Browse makers", href: "/makers" }}
+            />
           )}
         </>
       )}

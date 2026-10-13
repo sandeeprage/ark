@@ -20,6 +20,10 @@ export default function GlobalError({ reset }: { reset: () => void }) {
           >
             Try again
           </button>
+          <p>
+            <a href="/status">Service information</a> ·{" "}
+            <a href="mailto:arkragesupport@gmail.com">Contact support</a>
+          </p>
         </main>
       </body>
     </html>

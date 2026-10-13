@@ -79,11 +79,17 @@ export default async function Login({ searchParams }: { searchParams: Promise<Se
           <OAuthButtons github={providers.github} google={providers.google} />
         </form>
         <p className="auth-note">
+          New here? Choose either provider to create your ARK account.
+          <br />
           {providers.google
             ? "GitHub connection is optional with Google."
             : "Complete sign-in in the same browser where you started."}
           <br />
           Your profile and collections are public.
+        </p>
+        <p className="auth-note">
+          <Link href="/privacy">Privacy</Link> · <Link href="/terms">Terms</Link> ·{" "}
+          <Link href="/help">Help</Link>
         </p>
         <div className="auth-divider" />
         <Link href="/explore" className="text-link">

@@ -4,9 +4,14 @@ import { getViewer } from "@/modules/auth/session";
 import { SidebarNav, MobileNavigation } from "./navigation";
 import { SiteFooter } from "./site-footer";
 import { SiteNavigation } from "./site-navigation";
+import { cookies } from "next/headers";
+import { Avatar } from "./avatar";
 
 export async function AppShell({ children }: { children: React.ReactNode }) {
   const viewer = await getViewer();
+  const profileCreated = Boolean(
+    viewer && (await cookies()).get("ark-profile-created")?.value === "1",
+  );
   const username = viewer?.profile?.username;
   const items = [
     { href: "/explore", label: "Explore", icon: "compass" },
@@ -32,9 +37,12 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
       <div className="sidebar-bottom">
         {viewer ? (
           <Link href={username ? `/makers/${username}` : "/onboarding"} className="account-summary">
-            <span className="avatar">
-              {(viewer.profile?.display_name || "M").slice(0, 1).toUpperCase()}
-            </span>
+            <Avatar
+              id={viewer.id}
+              name={viewer.profile?.display_name || "Maker"}
+              hasAvatar={viewer.profile?.has_avatar}
+              version={viewer.profile?.avatar_version}
+            />
             <span>
               <strong>{viewer.profile?.display_name || "Your account"}</strong>
               <small>{username ? `@${username}` : "Complete your profile"}</small>
@@ -79,6 +87,11 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
           </Link>
         </header>
         <main id="main-content" tabIndex={-1}>
+          {profileCreated && (
+            <p className="notice" role="status">
+              Your profile is ready. Welcome to ARK.
+            </p>
+          )}
           {children}
         </main>
         <SiteFooter />

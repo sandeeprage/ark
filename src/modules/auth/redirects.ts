@@ -36,7 +36,7 @@ export function callbackFailure(code?: string) {
 export function signInErrorMessage(error: unknown) {
   const messages: Record<string, string> = {
     setup: "Sign-in configuration is incomplete.",
-    denied: "GitHub sign-in was cancelled. You can try again.",
+    denied: "Sign-in was cancelled. You can try again.",
     browser:
       "Sign-in started in another browser or domain. Open ARK in one browser and start sign-in again there.",
     expired: "This sign-in link expired or was already used. Start a fresh sign-in.",

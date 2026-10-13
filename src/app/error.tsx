@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 export default function ErrorPage({ reset }: { reset: () => void }) {
   return (
     <div className="page narrow-page">
@@ -7,6 +8,10 @@ export default function ErrorPage({ reset }: { reset: () => void }) {
       <button className="button button-primary" onClick={reset}>
         Try again
       </button>
+      <p className="form-note">
+        <Link href="/status">Service information</Link> ·{" "}
+        <a href="mailto:arkragesupport@gmail.com">Contact support</a>
+      </p>
     </div>
   );
 }

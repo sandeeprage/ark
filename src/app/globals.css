@@ -46,7 +46,7 @@
   --surface-raised: #fff;
   --text: #171717;
   --muted: #666;
-  --subtle: #858585;
+  --subtle: #6b6b6b;
   --border: #e5e5e5;
   --strong-border: #d4d4d4;
   --inverse: #fff;
@@ -1101,6 +1101,91 @@ main {
 .form-field .field-error {
   color: var(--text);
   font-weight: 600;
+}
+input[aria-invalid="true"],
+textarea[aria-invalid="true"],
+select[aria-invalid="true"] {
+  border: 2px solid var(--text);
+}
+.form-error-summary:focus {
+  outline: 2px solid var(--text);
+  outline-offset: 4px;
+}
+.upload-dropzone.is-dragging {
+  border: 2px dashed var(--text);
+  background: var(--hover);
+}
+.project-published-date {
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 12px;
+}
+.selected-filters a.tag {
+  min-height: 32px;
+}
+.legal-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.legal-links a {
+  padding-block: 6px;
+}
+.information-page section {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+.information-page section p {
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.8;
+}
+.help-topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+.help-topics a {
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.avatar {
+  position: relative;
+  overflow: hidden;
+}
+.avatar img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.avatar-form {
+  margin-top: 24px;
+  display: grid;
+  gap: 12px;
+}
+.form-field small,
+.optional,
+.form-note,
+.auth-note,
+.auth-bottom {
+  font-size: 12px;
+}
+.app-main > main > .notice {
+  margin-inline: 24px;
+}
+.information-page p {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 767px) {
+  .identity-row {
+    flex-wrap: wrap;
+  }
 }
 .field-error:empty {
   display: none;

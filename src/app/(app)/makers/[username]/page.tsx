@@ -11,6 +11,8 @@ import { getPinnedProjects } from "@/modules/projects/pins";
 import { getFollowState } from "@/modules/following/queries";
 import { FollowButton } from "@/components/follow-button";
 import { listCollections } from "@/modules/collections/queries";
+import { Avatar } from "@/components/avatar";
+import { ReportButton } from "@/components/report-button";
 
 export async function generateMetadata({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
@@ -39,9 +41,13 @@ export default async function Maker({
     <div className="page">
       <div className="maker-profile">
         <aside className="maker-summary">
-          <span className="avatar avatar-profile">
-            {profile.display_name.slice(0, 1).toUpperCase()}
-          </span>
+          <Avatar
+            id={profile.id}
+            name={profile.display_name}
+            hasAvatar={profile.has_avatar}
+            version={profile.avatar_version}
+            className="avatar-profile"
+          />
           <h1>{profile.display_name}</h1>
           <p className="username">@{profile.username}</p>
           <p className="maker-bio">{profile.bio || "A maker on ARK."}</p>
@@ -98,6 +104,20 @@ export default async function Maker({
           ) : (
             <p className="maker-totals">Following is temporarily unavailable.</p>
           )}
+          {viewer?.id !== profile.id && (
+            <ReportButton
+              kind="maker"
+              target={profile.id}
+              path={`/makers/${username}`}
+              access={
+                !viewer
+                  ? "anonymous"
+                  : viewer.status === "active" && viewer.profile?.username
+                    ? "active"
+                    : "restricted"
+              }
+            />
+          )}
         </aside>
         <section className="maker-projects">
           {collections.length > 0 && (
@@ -121,7 +141,11 @@ export default async function Maker({
               </div>
               <div className="project-grid" style={{ marginBottom: 32 }}>
                 {pinned.map((project) => (
-                  <ProjectCard key={project.id} project={project} />
+                  <ProjectCard
+                    key={project.id}
+                    project={project}
+                    contextHref={`/makers/${username}`}
+                  />
                 ))}
               </div>
             </>
@@ -142,7 +166,11 @@ export default async function Maker({
                 {result.projects
                   .filter((project) => !pinned.some((pin) => pin.id === project.id))
                   .map((project) => (
-                    <ProjectCard key={project.id} project={project} />
+                    <ProjectCard
+                      key={project.id}
+                      project={project}
+                      contextHref={feedUrl(filters, { cursor: null }, `/makers/${username}`)}
+                    />
                   ))}
               </div>
               {result.nextCursor && (
@@ -156,7 +184,7 @@ export default async function Maker({
             </>
           ) : (
             <EmptyState
-              title="Great work starts somewhere."
+              title="No projects published yet."
               description="This maker hasn’t published a project on ARK yet."
               action={
                 viewer?.id === profile.id

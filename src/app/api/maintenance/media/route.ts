@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient, isStorageConfigured } from "@/lib/supabase/admin";
+import { eraseAccounts } from "@/modules/auth/erasure";
 
 export const maxDuration = 60;
 export async function POST(request: NextRequest) {
@@ -22,11 +23,20 @@ export async function POST(request: NextRequest) {
       p_job: job.id,
     });
     if (readError) successful = false;
-    for (const bucket of ["ark-staging", "ark-media"]) {
+    for (const bucket of ["ark-staging", "ark-media", "ark-avatars"]) {
       const paths = ((objects ?? []) as { bucket: string; key: string }[])
         .filter((obj) => obj.bucket === bucket)
         .map((obj) => obj.key);
-      if (paths.some((path) => !/^([0-9a-f-]{36}\/){2}[0-9a-f-]{36}(\.webp)?$/.test(path))) {
+      if (
+        paths.some(
+          (path) =>
+            !(
+              bucket === "ark-avatars"
+                ? /^avatars\/[0-9a-f-]{36}\/[0-9a-f-]{36}\.webp$/
+                : /^([0-9a-f-]{36}\/){2}[0-9a-f-]{36}(\.webp)?$/
+            ).test(path),
+        )
+      ) {
         successful = false;
         continue;
       }
@@ -44,6 +54,11 @@ export async function POST(request: NextRequest) {
     if (successful && !finishError) completed++;
     else failed++;
   }
+  const accounts = await eraseAccounts(admin);
+  completed += accounts.completed;
+  failed += accounts.failed;
+  const retention = await admin.rpc("purge_moderation_records");
+  if (retention.error) failed++;
   return NextResponse.json(
     { completed, failed },
     { status: failed ? 503 : 200, headers: { "Cache-Control": "private, no-store" } },

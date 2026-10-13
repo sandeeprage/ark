@@ -7,17 +7,16 @@ import type { ProjectSummary } from "@/modules/discovery/queries";
 export function ProjectCard({
   project,
   compact = false,
+  contextHref,
 }: {
   project: ProjectSummary;
   compact?: boolean;
+  contextHref?: string;
 }) {
+  const href = `/projects/${project.id}${contextHref ? `?from=${encodeURIComponent(contextHref)}` : ""}`;
   return (
     <article className={compact ? "project-row" : "project-card"}>
-      <Link
-        className="project-cover"
-        href={`/projects/${project.id}`}
-        aria-label={`View ${project.name}`}
-      >
+      <Link className="project-cover" href={href} aria-label={`View ${project.name}`}>
         {project.cover ? (
           <Image
             src={project.cover.url}
@@ -35,12 +34,21 @@ export function ProjectCard({
       </Link>
       <div className="project-card-body">
         <div className="project-card-heading">
-          <Link href={`/projects/${project.id}`}>
+          <Link href={href}>
             <h3>{project.name}</h3>
           </Link>
           <ArrowUpRight size={15} aria-hidden="true" />
         </div>
         <p>{project.tagline}</p>
+        <time className="project-published-date" dateTime={project.published_at}>
+          Launched{" "}
+          {new Date(project.published_at).toLocaleDateString("en-IN", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+            timeZone: "Asia/Kolkata",
+          })}
+        </time>
         <div className="project-card-footer">
           <Link href={`/makers/${project.maker_username}`} className="maker-link">
             <span className="avatar avatar-small">

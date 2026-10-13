@@ -73,16 +73,39 @@ export function FeedFiltersForm({
       {Boolean(selected) && (
         <div className="selected-filters">
           {filters.category && (
-            <span className="tag">
+            <Link
+              className="tag"
+              aria-label="Remove category filter"
+              href={feedUrl(filters, { category: "", cursor: null }, pathname)}
+            >
               {categories.find((c) => c.slug === filters.category)?.name || filters.category}
-            </span>
+              <X size={13} aria-hidden="true" />
+            </Link>
           )}
           {filters.stack.map((stack) => (
-            <span className="tag" key={stack}>
+            <Link
+              className="tag"
+              key={stack}
+              aria-label={`Remove ${stack} filter`}
+              href={feedUrl(
+                filters,
+                { stack: filters.stack.filter((value) => value !== stack), cursor: null },
+                pathname,
+              )}
+            >
               {technologies.find((t) => t.slug === stack)?.name || stack}
-            </span>
+              <X size={13} aria-hidden="true" />
+            </Link>
           ))}
-          {filters.query && <span className="tag">“{filters.query}”</span>}
+          {filters.query && (
+            <Link
+              className="tag"
+              aria-label="Remove search filter"
+              href={feedUrl(filters, { query: "", cursor: null }, pathname)}
+            >
+              “{filters.query}” <X size={13} aria-hidden="true" />
+            </Link>
+          )}
           <Link
             href={feedUrl(filters, { category: "", stack: [], query: "", cursor: null }, pathname)}
             className="clear-filters"

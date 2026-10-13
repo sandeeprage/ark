@@ -12,6 +12,7 @@ export default defineConfig([
     "next-env.d.ts",
     ".local-postgres/**",
     ".local-postgres-check/**",
+    ".local-postgres-audit/**",
     "test-results/**",
     "playwright-report/**",
     "coverage/**",

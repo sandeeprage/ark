@@ -6,11 +6,23 @@ import { configuredAuthOrigin, loginDestination, callbackFailure } from "@/modul
 
 export async function GET(request: NextRequest) {
   const next = safeReturnPath(request.nextUrl.searchParams.get("next"));
+  const linkingActor = request.cookies.get("ark-link-actor")?.value;
   const origin = configuredAuthOrigin() ?? request.nextUrl.origin;
   const response = NextResponse.redirect(loginDestination(origin, next, "callback"));
   response.headers.set("Cache-Control", "private, no-store");
+  if (linkingActor) response.cookies.set("ark-link-actor", "", { path: "/", maxAge: 0 });
   const fail = (reason: string, stage: string, code?: string) => {
-    response.headers.set("Location", loginDestination(origin, next, reason).toString());
+    response.headers.set(
+      "Location",
+      linkingActor
+        ? new URL(
+            next === "/settings"
+              ? `/settings?connection_error=${encodeURIComponent(reason)}`
+              : `/onboarding?next=${encodeURIComponent(next)}&connection_error=${encodeURIComponent(reason)}`,
+            origin,
+          ).toString()
+        : loginDestination(origin, next, reason).toString(),
+    );
     // Log categories only, never URLs, OAuth codes, tokens or identities.
     console.warn(
       JSON.stringify({
@@ -80,6 +92,10 @@ export async function GET(request: NextRequest) {
     if (userError || !user) {
       await clearIssuedSession();
       return fail("callback", "identity", userError?.code);
+    }
+    if (linkingActor && linkingActor !== user.id) {
+      await clearIssuedSession();
+      return fail("callback", "linked_account_mismatch");
     }
     const { data: status, error: statusError } = await client.rpc("my_account_status");
     if (statusError) {

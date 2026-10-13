@@ -58,7 +58,7 @@ test("follow, feed membership, public lists and failure recovery", async ({ page
   await expect(page.locator("article.project-card,article.project-row")).toHaveCount(25);
   await page.goto("/makers/other_maker/followers");
   await expect(
-    page.getByRole("link", { name: "Fixture maker @fixture_maker", exact: true }),
+    page.getByRole("main").getByRole("link", { name: "Fixture maker @fixture_maker", exact: true }),
   ).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.goto("/makers/other_maker");

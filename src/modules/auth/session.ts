@@ -13,6 +13,8 @@ export type Profile = {
   github_username: string | null;
   github_connected_at: string | null;
   created_at: string;
+  has_avatar?: boolean;
+  avatar_version?: string | null;
 };
 export type Viewer = {
   id: string;
@@ -31,7 +33,9 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
     await Promise.all([
       client
         .from("profiles")
-        .select("id,username,display_name,bio,github_username,github_connected_at,created_at")
+        .select(
+          "id,username,display_name,bio,github_username,github_connected_at,created_at,avatar_object_key,avatar_updated_at",
+        )
         .eq("id", data.user.id)
         .maybeSingle(),
       client.rpc("my_account_status"),
@@ -45,7 +49,19 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
     throw new Error("Your account couldn’t be loaded. Please try again.");
   return {
     id: data.user.id,
-    profile: profile as Profile | null,
+    profile: profile
+      ? ({
+          id: profile.id,
+          username: profile.username,
+          display_name: profile.display_name,
+          bio: profile.bio,
+          github_username: profile.github_username,
+          github_connected_at: profile.github_connected_at,
+          created_at: profile.created_at,
+          has_avatar: Boolean(profile.avatar_object_key),
+          avatar_version: profile.avatar_updated_at,
+        } as Profile)
+      : null,
     status,
   };
 });

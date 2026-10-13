@@ -13,6 +13,8 @@ test-results/
 coverage/
 .local-postgres/
 .local-postgres-check/
+.local-postgres-audit/
+.audit-dependencies.json
 
 .vercel
 .env*

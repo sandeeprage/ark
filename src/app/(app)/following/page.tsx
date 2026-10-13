@@ -45,6 +45,7 @@ export default async function Following({ searchParams }: { searchParams: Promis
         />
       ) : (
         <ProjectFeed
+          contextHref={feedUrl(filters, { cursor: null }, "/following")}
           key={filterScope(filters) + JSON.stringify(filters.cursor)}
           initial={result.projects}
           initialNextUrl={

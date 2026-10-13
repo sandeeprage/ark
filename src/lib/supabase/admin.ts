@@ -11,6 +11,10 @@ export function createAdminClient() {
   const key = process.env.SUPABASE_SECRET_KEY;
   if (!url || !key) throw new Error("Server storage configuration is incomplete.");
   return createClient(url, key, {
+    global: {
+      fetch: (input, init) =>
+        fetch(input, { ...init, signal: init?.signal ?? AbortSignal.timeout(10000) }),
+    },
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });
 }

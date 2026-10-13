@@ -24,7 +24,7 @@ export function EmptyState({
           <span />
         </div>
       </div>
-      <h3>{title}</h3>
+      <h2>{title}</h2>
       <p>{description}</p>
       {action && (
         <Link href={action.href} className="button button-primary">

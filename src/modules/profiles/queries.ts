@@ -8,7 +8,7 @@ export const getPublicProfile = cache(async (username: string): Promise<Profile 
   if (!isSupabaseConfigured() || !/^[a-z0-9_]{3,30}$/.test(username)) return null;
   const client = await createClient();
   const { data, error } = await client
-    .rpc("get_public_profile", { p_username: username })
+    .rpc("get_public_profile_details", { p_username: username })
     .maybeSingle();
   if (error) throw new Error("The public profile could not be loaded.");
   return data as Profile | null;
