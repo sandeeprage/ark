@@ -23,4 +23,20 @@ test("account card opens the profile and keeps profile editing available", async
   await expect(navigation.getByRole("textbox", { name: "Display name" })).toHaveValue(
     "Fixture maker",
   );
+  const home = await navigation.goto("/");
+  expect(home?.headers()["cache-control"]).toContain("no-store");
+  const landingNavigation = navigation.getByRole("navigation", { name: "Landing navigation" });
+  await expect(landingNavigation.getByRole("link", { name: "Sign in", exact: true })).toHaveCount(0);
+  await expect(landingNavigation.getByRole("link", { name: "Your profile" })).toHaveAttribute(
+    "href",
+    "/makers/fixture_maker",
+  );
+  await navigation.reload();
+  await expect(landingNavigation.getByRole("link", { name: "Your profile" })).toBeVisible();
+  await navigation.goto("/settings");
+  await navigation.getByRole("button", { name: "Sign out", exact: true }).click();
+  await expect(navigation).toHaveURL(/\/explore$/);
+  await navigation.goto("/");
+  await expect(landingNavigation.getByRole("link", { name: "Sign in", exact: true })).toBeVisible();
+  await expect(landingNavigation.getByRole("link", { name: "Your profile" })).toHaveCount(0);
 });

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight, Compass, Layers3, Send, Users } from "lucide-react";
 import { SiteFooter } from "@/components/site-footer";
+import { getViewer } from "@/modules/auth/session";
 
 export const metadata: Metadata = {
   title: { absolute: "ARK — A home for shipped work" },
@@ -9,7 +10,22 @@ export const metadata: Metadata = {
     "Discover completed projects, meet the developers behind them, and give your own work a place to be found.",
 };
 
-export default function Home() {
+export default async function Home() {
+  const viewer = await getViewer();
+  const accountHref = !viewer
+    ? "/login"
+    : viewer.status !== "active"
+      ? "/account-restricted"
+      : viewer.profile?.username
+        ? `/makers/${viewer.profile.username}`
+        : "/onboarding";
+  const accountLabel = !viewer
+    ? "Sign in"
+    : viewer.status !== "active"
+      ? "Your account"
+      : viewer.profile?.username
+        ? "Your profile"
+        : "Complete profile";
   return (
     <>
       <a href="#main-content" className="skip-link">
@@ -26,7 +42,7 @@ export default function Home() {
           <nav className="landing-nav" aria-label="Landing navigation">
             <Link href="/explore">Explore</Link>
             <Link href="/search">Search</Link>
-            <Link href="/login">Sign in</Link>
+            <Link href={accountHref}>{accountLabel}</Link>
           </nav>
           <Link href="/publish" className="landing-header-action">
             Share your work <ArrowUpRight size={16} aria-hidden="true" />
