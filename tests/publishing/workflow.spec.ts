@@ -38,6 +38,22 @@ test.beforeEach(async ({ context, request }) => {
   ]);
 });
 
+test("publishing drafts stay scoped to the current ARK account", async ({ page }) => {
+  await page.addInitScript(() => {
+    if (!sessionStorage.getItem("fixture-draft-seeded")) {
+      const foreign = JSON.stringify({ values: { name: "Another account project" } });
+      sessionStorage.setItem("ark.publish", foreign);
+      sessionStorage.setItem("ark.other-account.publish", foreign);
+      sessionStorage.setItem("fixture-draft-seeded", "1");
+    }
+  });
+  await page.goto("/publish");
+  await expect(page.getByLabel("Project name", { exact: true })).toHaveValue("");
+  await page.getByLabel("Project name", { exact: true }).fill("My account draft");
+  await page.reload();
+  await expect(page.getByLabel("Project name", { exact: true })).toHaveValue("My account draft");
+});
+
 test("maker publishes validated images, edits, pins, and deletes", async ({
   page,
   request,

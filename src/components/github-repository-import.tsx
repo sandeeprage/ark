@@ -8,11 +8,13 @@ export function GitHubRepositoryImport({
   connected,
   available,
   appSlug,
+  githubUsername,
   onImport,
 }: {
   connected: boolean;
   available: boolean;
   appSlug: string;
+  githubUsername: string;
   onImport: (repository: ImportRepository, useDescription: boolean) => void;
 }) {
   const [repos, setRepos] = useState<ImportRepository[]>([]);
@@ -59,9 +61,10 @@ export function GitHubRepositoryImport({
         <Github size={20} aria-hidden="true" />
         <div>
           <h3>Import from GitHub</h3>
-          <p>Choose a repository, then review everything before publishing.</p>
+          <p>Choose one of your own repositories, then review everything before publishing.</p>
         </div>
       </div>
+      {connected && githubUsername && <p>Connected GitHub account: <strong>@{githubUsername}</strong></p>}
       {!connected ? (
         <>
           <p>Connect your GitHub identity to your ARK account first.</p>
@@ -156,7 +159,7 @@ export function GitHubRepositoryImport({
             </>
           ) : (
             <p>
-              No permitted public repositories found. Add a public repository in GitHub’s app
+              No permitted public repositories owned by your connected GitHub account found. Add a public repository in GitHub’s app
               settings, or enter your project manually.
             </p>
           )}

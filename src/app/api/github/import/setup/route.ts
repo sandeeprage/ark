@@ -19,7 +19,9 @@ export async function GET(request: NextRequest) {
     const result = await githubGet("/user/installations?per_page=100", session.token);
     if (
       Array.isArray(result.installations) &&
-      result.installations.some((item: { id?: number }) => String(item.id) === id)
+      result.installations.some((item: { id?: number; account?: { id?: number } }) =>
+        String(item.id) === id && item.account?.id === session.githubId,
+      )
     )
       redirect.headers.set("Location", new URL("/publish?github=installed", origin).toString());
   } catch {

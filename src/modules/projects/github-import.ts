@@ -112,7 +112,11 @@ export async function authorizedImportSession(cookie: string | undefined) {
 
 export async function listImportRepositories(
   token: string,
-): Promise<{ repositories: ImportRepository[]; installations: number }> {
+  githubId: number,
+): Promise<{ repositories: ImportRepository[]; installations: number; githubUsername: string }> {
+  const githubUser = await githubGet("/user", token);
+  if (githubUser.id !== githubId || typeof githubUser.login !== "string")
+    throw new Error("GitHub account changed. Connect repository access again.");
   const repositories: ImportRepository[] = [];
   const seen = new Set<number>();
   let installations = 0;
@@ -121,7 +125,10 @@ export async function listImportRepositories(
     if (!Array.isArray(result.installations))
       throw new Error("GitHub returned an invalid installation list.");
     for (const installation of result.installations) {
-      if (!Number.isSafeInteger(installation.id) || installation.id <= 0) continue;
+      if (
+        !Number.isSafeInteger(installation.id) || installation.id <= 0 ||
+        installation.account?.id !== githubId || installation.suspended_at
+      ) continue;
       installations++;
       for (let repoPage = 1; repoPage <= 5; repoPage++) {
         const listed = await githubGet(
@@ -133,6 +140,7 @@ export async function listImportRepositories(
         for (const repo of listed.repositories) {
           if (
             repo.private !== false ||
+            repo.owner?.id !== githubId ||
             repo.archived ||
             repo.disabled ||
             !Number.isSafeInteger(repo.id) ||
@@ -164,5 +172,6 @@ export async function listImportRepositories(
   return {
     repositories: repositories.sort((a, b) => a.fullName.localeCompare(b.fullName)),
     installations,
+    githubUsername: githubUser.login,
   };
 }

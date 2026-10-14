@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       { status: 401, headers: { "Cache-Control": "private, no-store" } },
     );
   try {
-    const data = await listImportRepositories(session.token);
+    const data = await listImportRepositories(session.token, session.githubId);
     return NextResponse.json(data, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
     return NextResponse.json(

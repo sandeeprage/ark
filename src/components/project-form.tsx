@@ -79,6 +79,7 @@ const steps = [
 ] as const;
 
 export function ProjectForm({
+  viewerId,
   categories,
   technologies,
   storageReady,
@@ -86,7 +87,9 @@ export function ProjectForm({
   githubConnected = false,
   githubImportAvailable = false,
   githubAppSlug = "",
+  githubUsername = "",
 }: {
+  viewerId: string;
   categories: CatalogItem[];
   technologies: CatalogItem[];
   storageReady: boolean;
@@ -94,9 +97,10 @@ export function ProjectForm({
   githubConnected?: boolean;
   githubImportAvailable?: boolean;
   githubAppSlug?: string;
+  githubUsername?: string;
 }) {
   const router = useRouter();
-  const cacheKey = initial ? `ark.edit.${initial.id}` : "ark.publish";
+  const cacheKey = initial ? `ark.${viewerId}.edit.${initial.id}` : `ark.${viewerId}.publish`;
   const [values, setValues] = useState<ProjectFormValues>(initial?.values ?? emptyValues);
   const [step, setStep] = useState(initial ? 4 : 0);
   const isWizard = !initial;
@@ -134,6 +138,8 @@ export function ProjectForm({
   useEffect(() => {
     const previewBlobs = blobs.current;
     try {
+      // Old drafts were shared across accounts; never restore those values.
+      sessionStorage.removeItem("ark.publish");
       const saved = JSON.parse(sessionStorage.getItem(cacheKey) ?? "null");
       if (saved?.values && (initialVersion === undefined || saved.version === initialVersion)) {
         const restoredValues = { ...emptyValues };
@@ -572,6 +578,7 @@ export function ProjectForm({
                 connected={githubConnected}
                 available={githubImportAvailable}
                 appSlug={githubAppSlug}
+                githubUsername={githubUsername}
                 onImport={importRepository}
               />
             )}

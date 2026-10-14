@@ -16,11 +16,14 @@ export default async function Publish() {
         One page. Everything people need to discover and try your project.
       </p>
       <ProjectForm
+        key={viewer.id}
+        viewerId={viewer.id}
         {...catalogs}
         storageReady={isStorageConfigured()}
         githubConnected={Boolean(viewer.profile?.github_connected_at)}
         githubImportAvailable={Boolean(githubApp)}
         githubAppSlug={githubApp?.slug ?? ""}
+        githubUsername={viewer.profile?.github_username ?? ""}
       />
     </div>
   );

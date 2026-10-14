@@ -17,7 +17,7 @@ export default async function Edit({
 }) {
   const { id } = await params;
   if (!z.uuid().safeParse(id).success) notFound();
-  await requireViewer(`/projects/${id}/edit`);
+  const viewer = await requireViewer(`/projects/${id}/edit`);
   const [initial, catalogs] = await Promise.all([getMyProject(id), getCatalogs()]);
   if (!initial || !["published", "hidden"].includes(initial.status)) notFound();
   const saved = (await searchParams).saved === "1";
@@ -41,7 +41,8 @@ export default async function Edit({
         </Link>
       )}
       <ProjectForm
-        key={`${id}:${initial.version}`}
+        key={`${viewer.id}:${id}:${initial.version}`}
+        viewerId={viewer.id}
         {...catalogs}
         initial={initial}
         storageReady={isStorageConfigured()}
