@@ -6,6 +6,7 @@ import { isSupabaseConfigured } from "@/lib/config";
 import { profileSchema, safeReturnPath } from "./validation";
 import { headers, cookies } from "next/headers";
 import { configuredAuthOrigin, loginDestination } from "./redirects";
+import { IMPORT_COOKIE, IMPORT_FLOW_COOKIE } from "@/modules/projects/github-import";
 
 export type FormState = {
   error?: string;
@@ -55,6 +56,12 @@ export async function signOut() {
           store.delete(cookie.name);
     }
   }
+  const store = await cookies();
+  store.delete(IMPORT_COOKIE);
+  store.set(IMPORT_FLOW_COOKIE, "", {
+    path: "/api/github/import/callback",
+    maxAge: 0,
+  });
   redirect("/explore");
 }
 

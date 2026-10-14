@@ -52,6 +52,11 @@ test("maker publishes validated images, edits, pins, and deletes", async ({
   });
   await page.goto("/publish");
   await expect(page.getByRole("heading", { name: "Give your work a home." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Import from GitHub" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Connect repository access" })).toBeVisible();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(page.getByText("Check the highlighted fields before continuing.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "The basics" })).toBeVisible();
   await page.getByLabel("Project name", { exact: true }).fill("Fixture toolkit");
   await page.getByLabel(/^Tagline/).fill("A complete toolkit for this isolated browser test");
   await page
@@ -59,10 +64,15 @@ test("maker publishes validated images, edits, pins, and deletes", async ({
     .fill(
       "A local testing fixture that exercises the real publishing UI, server image validation, and storage request flow. It is never added to the connected Supabase project.",
     );
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Where to try it" })).toBeVisible();
+  await page.getByRole("button", { name: "Back", exact: true }).click();
+  await expect(page.getByLabel("Project name", { exact: true })).toHaveValue("Fixture toolkit");
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.getByRole("combobox", { name: "Project type", exact: true }).selectOption("software");
   await page.getByLabel(/Public release or package/).fill("https://example.test/fixture-toolkit");
-  await page.getByLabel(/^Primary category/).selectOption("20000000-0000-4000-a000-000000000001");
-  await page.getByRole("checkbox", { name: "TypeScript", exact: true }).check();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Show your work" })).toBeVisible();
   const png = await sharp({ create: { width: 80, height: 60, channels: 3, background: "#171717" } })
     .withMetadata()
     .png()
@@ -78,6 +88,12 @@ test("maker publishes validated images, edits, pins, and deletes", async ({
     .getByLabel("Screenshot 2 description", { exact: true })
     .fill("A second toolkit screen");
   await page.getByRole("button", { name: "Move screenshot 2 up" }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Find the right company" })).toBeVisible();
+  await page.getByLabel(/^Primary category/).selectOption("20000000-0000-4000-a000-000000000001");
+  await page.getByRole("checkbox", { name: "TypeScript", exact: true }).check();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Ready for the world?" })).toBeVisible();
   await page.getByRole("checkbox", { name: /I confirm this project/ }).check();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath("publishing-form.png"), fullPage: true });

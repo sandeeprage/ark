@@ -4,6 +4,104 @@
 .project-form {
   margin-top: 38px;
 }
+.publish-steps {
+  margin-bottom: 26px;
+}
+.publish-steps ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.publish-steps li button {
+  min-height: 44px;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: left;
+}
+.publish-steps li[aria-current="step"] button {
+  border-color: var(--strong-border);
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 700;
+}
+.publish-steps li button:not(:disabled) {
+  cursor: pointer;
+}
+.publish-steps li button:disabled {
+  cursor: default;
+}
+.publish-steps li button span {
+  font-family: monospace;
+  margin-right: 4px;
+}
+.publish-steps > p {
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.publish-section[hidden] {
+  display: none;
+}
+.github-import {
+  margin-top: 24px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-raised);
+  display: grid;
+  gap: 14px;
+  font-size: 13px;
+}
+.github-import-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.github-import-heading h3 {
+  font-size: 16px;
+}
+.github-import-heading p,
+.github-import > p {
+  color: var(--muted);
+  line-height: 1.6;
+}
+.github-import-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 320px;
+  overflow: auto;
+}
+.github-import-list li {
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.github-import-list li div {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+}
+.github-import-list li strong,
+.github-import-list li span {
+  overflow-wrap: anywhere;
+}
+.github-import-list li span {
+  color: var(--muted);
+}
+.github-import-list li .button {
+  flex: none;
+}
 .project-form > fieldset {
   margin: 0;
   padding: 0;

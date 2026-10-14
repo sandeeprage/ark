@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { configuredAuthOrigin, loginDestination } from "./redirects";
 import { recentlyAuthenticated, usableIdentities } from "./account-validation";
 import { safeReturnPath } from "./validation";
+import { IMPORT_COOKIE } from "@/modules/projects/github-import";
 
 export async function connectIdentity(provider: string, next = "/settings") {
   if (provider !== "github" && provider !== "google") return { error: "Choose GitHub or Google." };
@@ -65,6 +66,7 @@ export async function disconnectIdentity(provider: string) {
   if (!identity) return { error: "That identity is not connected to your account." };
   const { error: unlinkError } = await client.auth.unlinkIdentity(identity);
   if (unlinkError) return { error: "The account could not be disconnected. Try again." };
+  if (provider === "github") (await cookies()).delete(IMPORT_COOKIE);
   const { error: syncError } = await client.rpc("sync_my_github_identity");
   revalidatePath("/", "layout");
   if (syncError)

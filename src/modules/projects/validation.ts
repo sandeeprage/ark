@@ -42,51 +42,81 @@ const optionalUrl = (github = false) =>
       }
     });
 
-export const projectInputSchema = z
-  .object({
-    name: z.string().trim().min(2).max(80),
-    tagline: z.string().trim().min(10).max(160),
-    description: z
-      .string()
-      .trim()
-      .min(100, "Tell people about your project in at least 100 characters.")
-      .max(10000),
-    launch_kind: z.enum(["hosted", "software"]),
-    live_url: optionalUrl(),
-    github_url: optionalUrl(true),
-    release_url: optionalUrl(),
-    demo_video_url: optionalUrl().refine(
-      (value) =>
-        !value ||
-        ["youtube.com", "www.youtube.com", "youtu.be", "vimeo.com", "www.vimeo.com"].includes(
-          new URL(value).hostname,
-        ),
-      "Use a YouTube or Vimeo URL.",
-    ),
-    category_id: z.uuid("Choose a category."),
-    technology_ids: z
-      .array(z.uuid())
-      .min(1, "Choose at least one technology.")
-      .max(10)
-      .refine((values) => new Set(values).size === values.length, "Choose each technology once."),
-    launch_confirmed: z.literal(true, {
-      error: "Confirm your project is completed and publicly available.",
-    }),
+export const projectFieldsSchema = z.object({
+  name: z.string().trim().min(2).max(80),
+  tagline: z.string().trim().min(10).max(160),
+  description: z
+    .string()
+    .trim()
+    .min(100, "Tell people about your project in at least 100 characters.")
+    .max(10000),
+  launch_kind: z.enum(["hosted", "software"]),
+  live_url: optionalUrl(),
+  github_url: optionalUrl(true),
+  release_url: optionalUrl(),
+  demo_video_url: optionalUrl().refine(
+    (value) =>
+      !value ||
+      ["youtube.com", "www.youtube.com", "youtu.be", "vimeo.com", "www.vimeo.com"].includes(
+        new URL(value).hostname,
+      ),
+    "Use a YouTube or Vimeo URL.",
+  ),
+  category_id: z.uuid("Choose a category."),
+  technology_ids: z
+    .array(z.uuid())
+    .min(1, "Choose at least one technology.")
+    .max(10)
+    .refine((values) => new Set(values).size === values.length, "Choose each technology once."),
+  launch_confirmed: z.literal(true, {
+    error: "Confirm your project is completed and publicly available.",
+  }),
+});
+
+export const projectBasicsSchema = projectFieldsSchema.pick({
+  name: true,
+  tagline: true,
+  description: true,
+});
+function validateDestination(
+  value: {
+    launch_kind: "hosted" | "software";
+    live_url: string | null;
+    github_url: string | null;
+    release_url: string | null;
+  },
+  ctx: z.RefinementCtx,
+) {
+  if (!value.live_url && !value.github_url && !value.release_url)
+    ctx.addIssue({
+      code: "custom",
+      path: ["live_url"],
+      message: "Add a working website, repository, or public release.",
+    });
+  if (value.launch_kind === "hosted" && !value.live_url)
+    ctx.addIssue({
+      code: "custom",
+      path: ["live_url"],
+      message: "A website or hosted app needs a live HTTPS URL.",
+    });
+}
+
+export const projectDestinationSchema = projectFieldsSchema
+  .pick({
+    launch_kind: true,
+    live_url: true,
+    github_url: true,
+    release_url: true,
+    demo_video_url: true,
   })
-  .superRefine((value, ctx) => {
-    if (!value.live_url && !value.github_url && !value.release_url)
-      ctx.addIssue({
-        code: "custom",
-        path: ["live_url"],
-        message: "Add a working website, repository, or public release.",
-      });
-    if (value.launch_kind === "hosted" && !value.live_url)
-      ctx.addIssue({
-        code: "custom",
-        path: ["live_url"],
-        message: "A website or hosted app needs a live HTTPS URL.",
-      });
-  });
+  .superRefine(validateDestination);
+
+export const projectDiscoverySchema = projectFieldsSchema.pick({
+  category_id: true,
+  technology_ids: true,
+});
+
+export const projectInputSchema = projectFieldsSchema.superRefine(validateDestination);
 
 export type ProjectInput = z.output<typeof projectInputSchema>;
 export const mediaSelectionSchema = z

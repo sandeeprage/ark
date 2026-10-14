@@ -12,8 +12,18 @@ import {
   editProject,
   discardProjectUpload,
 } from "@/modules/projects/actions";
-import { MAX_IMAGE_BYTES, imageTypes, projectInputSchema } from "@/modules/projects/validation";
+import {
+  MAX_IMAGE_BYTES,
+  imageTypes,
+  projectInputSchema,
+  projectBasicsSchema,
+  projectDestinationSchema,
+  projectDiscoverySchema,
+} from "@/modules/projects/validation";
 import type { CatalogItem } from "@/modules/discovery/queries";
+import { GitHubRepositoryImport } from "./github-repository-import";
+import type { ImportRepository } from "@/modules/projects/github-import";
+import { normalizeUrl } from "@/modules/projects/validation";
 
 export type ProjectFormValues = {
   name: string;
@@ -60,21 +70,36 @@ const emptyValues: ProjectFormValues = {
   technology_ids: [],
   launch_confirmed: false,
 };
+const steps = [
+  "The basics",
+  "Where to try it",
+  "Show your work",
+  "Find the right company",
+  "Ready for the world?",
+] as const;
 
 export function ProjectForm({
   categories,
   technologies,
   storageReady,
   initial,
+  githubConnected = false,
+  githubImportAvailable = false,
+  githubAppSlug = "",
 }: {
   categories: CatalogItem[];
   technologies: CatalogItem[];
   storageReady: boolean;
   initial?: InitialProject;
+  githubConnected?: boolean;
+  githubImportAvailable?: boolean;
+  githubAppSlug?: string;
 }) {
   const router = useRouter();
   const cacheKey = initial ? `ark.edit.${initial.id}` : "ark.publish";
   const [values, setValues] = useState<ProjectFormValues>(initial?.values ?? emptyValues);
+  const [step, setStep] = useState(initial ? 4 : 0);
+  const isWizard = !initial;
   const [screenshots, setScreenshots] = useState<Screenshot[]>(
     () =>
       initial?.media.map((media) => ({
@@ -132,6 +157,13 @@ export function ProjectForm({
         // Restore tab-local text after hydration; Files stay in memory and must be reselected after a reload.
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setValues(restoredValues);
+        if (
+          initialVersion === undefined &&
+          Number.isInteger(saved.step) &&
+          saved.step >= 0 &&
+          saved.step < steps.length
+        )
+          setStep(saved.step);
         setRestored(true);
         setDirty(true);
         dirtyRef.current = true;
@@ -153,13 +185,18 @@ export function ProjectForm({
       try {
         sessionStorage.setItem(
           cacheKey,
-          JSON.stringify({ values, requestKey: requestKey.current, version: initial?.version }),
+          JSON.stringify({
+            values,
+            step,
+            requestKey: requestKey.current,
+            version: initial?.version,
+          }),
         );
       } catch {
         /* Storage can be unavailable in private browsing. */
       }
     }
-  }, [values, dirty, cacheKey, initial?.version]);
+  }, [values, step, dirty, cacheKey, initial?.version]);
   useEffect(() => {
     function unload(event: BeforeUnloadEvent) {
       if (dirtyRef.current) {
@@ -197,6 +234,27 @@ export function ProjectForm({
       delete next[key];
       return next;
     });
+    setError("");
+  }
+  function importRepository(repository: ImportRepository, useDescription: boolean) {
+    let homepage = "";
+    try {
+      if (repository.homepage) homepage = normalizeUrl(repository.homepage);
+    } catch {
+      /* A non-HTTPS homepage is left for the maker to replace. */
+    }
+    const description = repository.description.trim();
+    changed();
+    setValues((previous) => ({
+      ...previous,
+      name: repository.name,
+      tagline: useDescription ? description.slice(0, 160) : previous.tagline,
+      description: useDescription ? description : previous.description,
+      github_url: repository.url,
+      live_url: homepage || previous.live_url,
+      launch_kind: homepage ? "hosted" : "software",
+    }));
+    setFields({});
     setError("");
   }
   function addFiles(files: FileList | null) {
@@ -257,8 +315,40 @@ export function ProjectForm({
       /* A saved project must still navigate. */
     }
   }
+  function advance() {
+    const parsed =
+      step === 0
+        ? projectBasicsSchema.safeParse(values)
+        : step === 1
+          ? projectDestinationSchema.safeParse(values)
+          : step === 3
+            ? projectDiscoverySchema.safeParse(values)
+            : null;
+    if (parsed && !parsed.success) {
+      setFields(parsed.error.flatten().fieldErrors);
+      setError("Check the highlighted fields before continuing.");
+      return;
+    }
+    if (
+      step === 2 &&
+      (!screenshots.length ||
+        screenshots.some((image) => !image.alt.trim() || image.alt.length > 500) ||
+        !screenshots.some((image) => image.localId === cover))
+    ) {
+      setError("Add 1–8 screenshots, describe each one, and choose a cover.");
+      return;
+    }
+    setError("");
+    setFields({});
+    setStep((previous) => Math.min(previous + 1, steps.length - 1));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (step < steps.length - 1) {
+      advance();
+      return;
+    }
     setError("");
     setFields({});
     setConflict(false);
@@ -267,6 +357,25 @@ export function ProjectForm({
     if (!parsed.success) {
       setFields(parsed.error.flatten().fieldErrors);
       setError("Check the highlighted fields.");
+      const keys = Object.keys(parsed.error.flatten().fieldErrors);
+      if (isWizard)
+        setStep(
+          keys.some((key) => ["name", "tagline", "description"].includes(key))
+            ? 0
+            : keys.some((key) =>
+                  [
+                    "launch_kind",
+                    "live_url",
+                    "github_url",
+                    "release_url",
+                    "demo_video_url",
+                  ].includes(key),
+                )
+              ? 1
+              : keys.some((key) => ["category_id", "technology_ids"].includes(key))
+                ? 3
+                : 4,
+        );
       return;
     }
     if (
@@ -275,6 +384,7 @@ export function ProjectForm({
       !screenshots.some((image) => image.localId === cover)
     ) {
       setError("Add 1–8 screenshots, describe each one, and choose a cover.");
+      if (isWizard) setStep(2);
       return;
     }
     if (!storageReady) {
@@ -399,7 +509,31 @@ export function ProjectForm({
   }
   const errorFor = (key: string) => fields[key]?.[0];
   return (
-    <form onSubmit={submit} className="project-form">
+    <form onSubmit={submit} className="project-form" noValidate>
+      {isWizard && (
+        <nav className="publish-steps" aria-label="Publishing steps">
+          <ol>
+            {steps.map((label, index) => (
+              <li key={label} aria-current={step === index ? "step" : undefined}>
+                <button
+                  type="button"
+                  disabled={busy || index >= step}
+                  onClick={() => {
+                    setStep(index);
+                    setError("");
+                    setFields({});
+                  }}
+                >
+                  <span>{String(index + 1).padStart(2, "0")}</span> {label}
+                </button>
+              </li>
+            ))}
+          </ol>
+          <p role="status">
+            Step {step + 1} of {steps.length}: {steps[step]}
+          </p>
+        </nav>
+      )}
       {error && (
         <p
           ref={errorSummary}
@@ -428,11 +562,19 @@ export function ProjectForm({
         </p>
       )}
       <fieldset disabled={busy}>
-        <section className="publish-section">
+        <section className="publish-section" hidden={isWizard && step !== 0}>
           <div className="section-number">01</div>
           <div>
             <h2>The basics</h2>
             <p>Tell people what you made and why it’s useful.</p>
+            {isWizard && (
+              <GitHubRepositoryImport
+                connected={githubConnected}
+                available={githubImportAvailable}
+                appSlug={githubAppSlug}
+                onImport={importRepository}
+              />
+            )}
             <div className="publish-fields">
               <label className="form-field">
                 Project name
@@ -496,7 +638,7 @@ export function ProjectForm({
             </div>
           </div>
         </section>
-        <section className="publish-section">
+        <section className="publish-section" hidden={isWizard && step !== 1}>
           <div className="section-number">02</div>
           <div>
             <h2>Where to try it</h2>
@@ -578,7 +720,7 @@ export function ProjectForm({
             </div>
           </div>
         </section>
-        <section className="publish-section">
+        <section className="publish-section" hidden={isWizard && step !== 2}>
           <div className="section-number">03</div>
           <div>
             <h2>Show your work</h2>
@@ -713,7 +855,7 @@ export function ProjectForm({
             </div>
           </div>
         </section>
-        <section className="publish-section">
+        <section className="publish-section" hidden={isWizard && step !== 3}>
           <div className="section-number">04</div>
           <div>
             <h2>Find the right company</h2>
@@ -779,7 +921,7 @@ export function ProjectForm({
             </div>
           </div>
         </section>
-        <section className="publish-section">
+        <section className="publish-section" hidden={isWizard && step !== 4}>
           <div className="section-number">05</div>
           <div>
             <h2>{initial ? "Review your changes" : "Ready for the world?"}</h2>
@@ -809,6 +951,19 @@ export function ProjectForm({
         </section>
       </fieldset>
       <div className="publish-submit">
+        {isWizard && step > 0 && !busy && (
+          <button
+            type="button"
+            className="button button-outline"
+            onClick={() => {
+              setStep((previous) => previous - 1);
+              setError("");
+              setFields({});
+            }}
+          >
+            Back
+          </button>
+        )}
         <div aria-live="polite">
           {progress && (
             <p className="progress-note" role="status">
@@ -828,9 +983,9 @@ export function ProjectForm({
         <button
           className="button button-primary"
           type="submit"
-          disabled={busy || !storageReady || Boolean(initial && !dirty)}
+          disabled={busy || (step === 4 && (!storageReady || Boolean(initial && !dirty)))}
         >
-          {busy ? "Working…" : initial ? "Save changes" : "Publish project"}
+          {busy ? "Working…" : step < 4 ? "Continue" : initial ? "Save changes" : "Publish project"}
           <ArrowRight size={16} />
         </button>
         {busy && (
