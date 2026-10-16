@@ -138,5 +138,20 @@ export async function searchMakers(query: string) {
     p_query: query.slice(0, 100),
     p_limit: 20,
   });
-  return { makers: (data ?? []) as Profile[], error: Boolean(error) };
+  const makers = (data ?? []) as Profile[];
+  if (error || !makers.length) return { makers, error: Boolean(error) };
+  const { data: avatars, error: avatarError } = await client
+    .from("profiles")
+    .select("id,avatar_object_key,avatar_updated_at")
+    .in("id", makers.map((maker) => maker.id));
+  if (avatarError) return { makers: [] as Profile[], error: true };
+  const byId = new Map((avatars ?? []).map((profile) => [profile.id, profile]));
+  return {
+    makers: makers.map((maker) => ({
+      ...maker,
+      has_avatar: Boolean(byId.get(maker.id)?.avatar_object_key),
+      avatar_version: byId.get(maker.id)?.avatar_updated_at ?? null,
+    })),
+    error: false,
+  };
 }

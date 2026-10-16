@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowUpRight, Search } from "lucide-react";
 import { searchMakers } from "@/modules/discovery/queries";
 import { EmptyState } from "@/components/empty-state";
+import { Avatar } from "@/components/avatar";
 
 export const metadata = { title: "Makers" };
 
@@ -48,7 +49,7 @@ export default async function Makers({
               key={maker.id}
             >
               <div className="maker-directory-top">
-                <span className="avatar">{maker.display_name.slice(0, 1).toUpperCase()}</span>
+                <Avatar id={maker.id} name={maker.display_name} hasAvatar={maker.has_avatar} version={maker.avatar_version} />
                 <ArrowUpRight size={17} aria-hidden="true" />
               </div>
               <h2>{maker.display_name}</h2>

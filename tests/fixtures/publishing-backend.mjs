@@ -680,7 +680,11 @@ const server = http.createServer(async (request, response) => {
         project.status = "deleted";
         return json(null);
       }
-      if (name === "search_makers") return json([]);
+      if (name === "search_makers") return json(avatarKey ? [{
+        id: owner, username: "fixture_maker",
+        display_name: profileOverride?.display_name ?? "Fixture maker",
+        bio: "Browser fixture only",
+      }] : []);
       return json({ code: "PGRST202", message: "Unknown fixture RPC" }, 404);
     }
     const signedUpload = "/storage/v1/object/upload/sign/";

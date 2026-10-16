@@ -4,6 +4,7 @@ import { getCatalogs, listProjects, searchMakers } from "@/modules/discovery/que
 import { FeedFiltersForm } from "@/components/feed-filters";
 import { EmptyState } from "@/components/empty-state";
 import { ProjectFeed } from "@/components/project-feed";
+import { Avatar } from "@/components/avatar";
 
 export const metadata = { title: "Search" };
 export default async function Search({ searchParams }: { searchParams: Promise<SearchParams> }) {
@@ -72,7 +73,7 @@ export default async function Search({ searchParams }: { searchParams: Promise<S
             <div className="maker-results">
               {people.makers.map((maker) => (
                 <Link href={`/makers/${maker.username}`} key={maker.id} className="maker-result">
-                  <span className="avatar">{maker.display_name.slice(0, 1).toUpperCase()}</span>
+                  <Avatar id={maker.id} name={maker.display_name} hasAvatar={maker.has_avatar} version={maker.avatar_version} />
                   <div>
                     <strong>{maker.display_name}</strong>
                     <span>@{maker.username}</span>

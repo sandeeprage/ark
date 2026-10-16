@@ -33,6 +33,13 @@ test("profile saves acknowledge changes, reject unchanged submissions, and expos
         .evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth === 512),
     )
     .toBe(true);
+  await page.goto("/makers");
+  const makerPhoto = page.locator(".maker-directory-card .avatar img");
+  await expect(makerPhoto).toHaveCount(1);
+  await expect.poll(() => makerPhoto.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth === 512)).toBe(true);
+  await page.goto("/search?q=fixture");
+  await expect(page.locator(".maker-result .avatar img")).toHaveCount(1);
+  await page.goto("/settings");
   await page.getByRole("button", { name: "Remove avatar", exact: true }).click();
   await expect(page.getByText("Avatar removed.", { exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
