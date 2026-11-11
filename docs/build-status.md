@@ -1,6 +1,6 @@
 # Build status — 13 October 2026
 
-ARK is an internal development build deployed at https://ark-rage.vercel.app. The invited public beta remains closed. Source is stored in the private https://github.com/sandeeprage/ark repository. GitHub Actions application and database jobs passed.
+ARK is an internal development build deployed at https://ark-rage.vercel.app. The invited public beta remains closed. Source is publicly available at https://github.com/sandeeprage/ark under the MIT License. The hosted application remains an internal development deployment; the invited public beta is closed. GitHub Actions application and database jobs passed.
 
 | Milestone                      | Status                                                                                        | Remaining gate                                                                                                                                                  |
 | ------------------------------ | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
