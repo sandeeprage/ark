@@ -1,6 +1,10 @@
 # ARK
 
-A home for completed, publicly available developer projects. Next.js App Router, TypeScript, Tailwind CSS, Radix accessible primitives, and Supabase. Deployment target: Vercel.
+A home for completed, publicly available developer projects. Next.js App Router, TypeScript, Tailwind CSS, Radix accessible primitives, and Supabase. Deployment target: Vercel. ARK is source-available under the MIT License; the hosted application is an internal development deployment, not an open public beta.
+
+## License and contributions
+
+ARK is licensed under the [MIT License](LICENSE). Contributions are welcome; read [CONTRIBUTING.md](CONTRIBUTING.md) before opening an issue or pull request. Third-party dependencies and services remain subject to their own licenses and terms.
 
 ## Run locally
 
@@ -50,7 +54,7 @@ For Vercel, configure a random server-only `CRON_SECRET`. The committed `vercel.
 - Explore/search append pages in place, deduplicate changing ranks, and offer Refresh without reshuffling a loaded feed.
 - Project publishing with private staged uploads, decoded image validation, metadata removal, signed screenshots, versioned editing, named deletion confirmation, and profile pins.
 
-Follows, public collections, notification UI, identity linking/disconnection, moderation, account erasure and deployment remain pending. Real GitHub sign-in/onboarding is verified; Google and broader provider failure scenarios remain to be checked. This is an internal development build, not the public-beta release.
+The implementation also includes following, public collections, notifications, identity linking/disconnection, moderation, and account-erasure workflows. See [the build status](docs/build-status.md) for the current verification record and remaining launch gates. The hosted application remains an internal development build; it is not the public-beta release.
 
 ## Checks
 
