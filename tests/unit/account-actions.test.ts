@@ -1,14 +1,21 @@
 import { beforeEach, expect, it, vi } from "vitest";
-const mocks = vi.hoisted(() => ({ user: vi.fn(), rpc: vi.fn(), unlink: vi.fn(), link: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  user: vi.fn(),
+  rpc: vi.fn(),
+  unlink: vi.fn(),
+  link: vi.fn(),
+  deleteCookie: vi.fn(),
+}));
 vi.mock("@/lib/supabase/server", () => ({
   createClient: async () => ({
     auth: { getUser: mocks.user, unlinkIdentity: mocks.unlink, linkIdentity: mocks.link },
     rpc: mocks.rpc,
   }),
 }));
+vi.mock("@/modules/projects/github-import", () => ({ IMPORT_COOKIE: "ark-github-import" }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("next/headers", () => ({
-  cookies: async () => ({ set: vi.fn(), getAll: () => [] }),
+  cookies: async () => ({ set: vi.fn(), getAll: () => [], delete: mocks.deleteCookie }),
   headers: async () => ({ get: () => "ark.example.test" }),
 }));
 vi.mock("@/modules/auth/redirects", () => ({
@@ -71,5 +78,6 @@ it("only unlinks an identity from the verified current user", async () => {
   });
   expect((await disconnectIdentity("github")).success).toBeTruthy();
   expect(mocks.unlink).toHaveBeenCalledWith(identity);
+  expect(mocks.deleteCookie).toHaveBeenCalledWith("ark-github-import");
   expect(mocks.rpc).toHaveBeenCalledWith("sync_my_github_identity");
 });
