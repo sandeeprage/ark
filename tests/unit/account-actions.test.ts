@@ -6,6 +6,7 @@ vi.mock("@/lib/supabase/server", () => ({
     rpc: mocks.rpc,
   }),
 }));
+vi.mock("@/modules/projects/github-import", () => ({ IMPORT_COOKIE: "ark-github-import" }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("next/headers", () => ({
   cookies: async () => ({ set: vi.fn(), getAll: () => [] }),
